@@ -18,17 +18,37 @@ services:
     volumes: !reset []  # do not bind-mount source in production, use the built image
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     ports: !reset []  # no host port: only reachable through Traefik over the docker network
+    environment:
+      # Lock CORS down to the real production frontend origin instead of the "*" dev default.
+      CORS_ORIGINS: https://${FRONTEND_DOMAIN_NAME}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.fitfolio-api.rule=Host(`${DOMAIN_NAME}`)"
+      - "traefik.http.routers.fitfolio-api.rule=Host(`${API_DOMAIN_NAME}`)"
       - "traefik.http.routers.fitfolio-api.entrypoints=websecure"
       - "traefik.http.routers.fitfolio-api.tls.certresolver=letsencrypt"
       - "traefik.http.services.fitfolio-api.loadbalancer.server.port=8000"
       # Redirect plain HTTP to HTTPS
-      - "traefik.http.routers.fitfolio-api-http.rule=Host(`${DOMAIN_NAME}`)"
+      - "traefik.http.routers.fitfolio-api-http.rule=Host(`${API_DOMAIN_NAME}`)"
       - "traefik.http.routers.fitfolio-api-http.entrypoints=web"
       - "traefik.http.routers.fitfolio-api-http.middlewares=fitfolio-https-redirect"
       - "traefik.http.middlewares.fitfolio-https-redirect.redirectscheme.scheme=https"
+
+  web:
+    build:
+      context: ./app
+      args:
+        API_BASE_URL: https://${API_DOMAIN_NAME}/api/v1
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fitfolio-web.rule=Host(`${FRONTEND_DOMAIN_NAME}`)"
+      - "traefik.http.routers.fitfolio-web.entrypoints=websecure"
+      - "traefik.http.routers.fitfolio-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.fitfolio-web.loadbalancer.server.port=80"
+      # Redirect plain HTTP to HTTPS (reuses the same middleware defined on the api service)
+      - "traefik.http.routers.fitfolio-web-http.rule=Host(`${FRONTEND_DOMAIN_NAME}`)"
+      - "traefik.http.routers.fitfolio-web-http.entrypoints=web"
+      - "traefik.http.routers.fitfolio-web-http.middlewares=fitfolio-https-redirect"
 
   traefik:
     image: traefik:v3.1

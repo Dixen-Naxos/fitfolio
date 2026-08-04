@@ -1,0 +1,55 @@
+services:
+  db:
+    ports: !reset []  # do not expose postgres publicly in production
+    restart: always
+
+  minio:
+    # !override replaces (rather than appends to) the dev port mappings, so MinIO is not
+    # publicly reachable on 0.0.0.0 in production.
+    ports: !override
+      - "127.0.0.1:9000:9000"   # keep S3 API loopback-only; expose via reverse proxy if needed
+      - "127.0.0.1:9001:9001"   # keep console loopback-only
+    restart: always
+
+  api:
+    build:
+      context: ./api
+    restart: always
+    volumes: !reset []  # do not bind-mount source in production, use the built image
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports: !reset []  # no host port: only reachable through Traefik over the docker network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fitfolio-api.rule=Host(`${DOMAIN_NAME}`)"
+      - "traefik.http.routers.fitfolio-api.entrypoints=websecure"
+      - "traefik.http.routers.fitfolio-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.fitfolio-api.loadbalancer.server.port=8000"
+      # Redirect plain HTTP to HTTPS
+      - "traefik.http.routers.fitfolio-api-http.rule=Host(`${DOMAIN_NAME}`)"
+      - "traefik.http.routers.fitfolio-api-http.entrypoints=web"
+      - "traefik.http.routers.fitfolio-api-http.middlewares=fitfolio-https-redirect"
+      - "traefik.http.middlewares.fitfolio-https-redirect.redirectscheme.scheme=https"
+
+  traefik:
+    image: traefik:v3.1
+    restart: always
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      # Uncomment to expose the dashboard (put it behind auth/a router rule before enabling):
+      # - "--api.dashboard=true"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-letsencrypt:/letsencrypt
+
+volumes:
+  traefik-letsencrypt:

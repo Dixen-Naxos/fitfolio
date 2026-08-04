@@ -1,0 +1,45 @@
+# --- Python / FastAPI (api/) ---
+api/__pycache__/
+api/**/__pycache__/
+*.py[cod]
+api/.venv/
+api/venv/
+api/.pytest_cache/
+api/.mypy_cache/
+api/.ruff_cache/
+api/htmlcov/
+api/.coverage
+api/*.egg-info/
+api/.env
+
+# --- Flutter / Dart (app/) ---
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/.pub-cache/
+app/.pub/
+app/build/
+app/ios/Pods/
+app/ios/.symlinks/
+app/ios/Flutter/Flutter.framework
+app/ios/Flutter/Flutter.podspec
+app/android/.gradle/
+app/android/local.properties
+app/android/**/gradle-wrapper.jar
+app/*.iml
+app/.idea/
+
+# --- Docker / secrets ---
+.env
+.env.*
+!.env.example
+!api/.env.example
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+
+# --- Local infra data volumes (if bind-mounted during dev) ---
+.data/

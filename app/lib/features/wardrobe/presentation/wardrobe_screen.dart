@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../cubit/wardrobe_cubit.dart';
 import '../cubit/wardrobe_state.dart';
 import '../models/clothing_item.dart';
@@ -24,8 +25,9 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('My Wardrobe')),
+      appBar: AppBar(title: Text(l10n.myWardrobe)),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/wardrobe/add'),
         child: const Icon(Icons.add_a_photo),
@@ -36,7 +38,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (state.status == WardrobeStatus.error) {
-            return Center(child: Text(state.errorMessage ?? 'Something went wrong'));
+            return Center(child: Text(state.errorMessage ?? l10n.somethingWentWrong));
           }
 
           final items = _filter == null
@@ -56,7 +58,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: ChoiceChip(
-                          label: const Text('All'),
+                          label: Text(l10n.allFilter),
                           selected: _filter == null,
                           onSelected: (_) => setState(() => _filter = null),
                         ),
@@ -65,7 +67,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: ChoiceChip(
-                            label: Text(category.label),
+                            label: Text(category.label(context)),
                             selected: _filter == category,
                             onSelected: (_) => setState(() => _filter = category),
                           ),
@@ -75,7 +77,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                 ),
                 Expanded(
                   child: items.isEmpty
-                      ? const Center(child: Text('No clothes yet. Tap + to add one.'))
+                      ? Center(child: Text(l10n.noClothesYet))
                       : GridView.builder(
                           padding: const EdgeInsets.all(12),
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -124,7 +126,7 @@ class _ClothingItemCard extends StatelessWidget {
               children: [
                 Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis),
                 Text(
-                  item.category.label,
+                  item.category.label(context),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],

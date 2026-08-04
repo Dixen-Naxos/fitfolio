@@ -5,6 +5,7 @@ import '../../features/auth/cubit/auth_cubit.dart';
 import '../../features/friends/presentation/friends_screen.dart';
 import '../../features/outfits/presentation/outfits_screen.dart';
 import '../../features/wardrobe/presentation/wardrobe_screen.dart';
+import '../../l10n/app_localizations.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -20,22 +21,23 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: IndexedStack(index: _index, children: _tabs),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (index) => setState(() => _index = index),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.checkroom), label: 'Wardrobe'),
-          NavigationDestination(icon: Icon(Icons.style), label: 'Outfits'),
-          NavigationDestination(icon: Icon(Icons.people), label: 'Friends'),
+        destinations: [
+          NavigationDestination(icon: const Icon(Icons.checkroom), label: l10n.wardrobeTab),
+          NavigationDestination(icon: const Icon(Icons.style), label: l10n.outfitsTab),
+          NavigationDestination(icon: const Icon(Icons.people), label: l10n.friendsTab),
         ],
       ),
       drawer: Drawer(
         child: SafeArea(
           child: ListTile(
             leading: const Icon(Icons.logout),
-            title: const Text('Log out'),
+            title: Text(l10n.logOut),
             onTap: () => context.read<AuthCubit>().logout(),
           ),
         ),

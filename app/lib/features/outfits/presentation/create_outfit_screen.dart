@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../wardrobe/cubit/wardrobe_cubit.dart';
 import '../../wardrobe/cubit/wardrobe_state.dart';
 import '../../wardrobe/models/clothing_item.dart';
@@ -42,20 +43,21 @@ class _CreateOutfitScreenState extends State<CreateOutfitScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Create outfit')),
+      appBar: AppBar(title: Text(l10n.createOutfit)),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
               controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Outfit name'),
+              decoration: InputDecoration(labelText: l10n.outfitName),
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Align(alignment: Alignment.centerLeft, child: Text('Select clothing items')),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Align(alignment: Alignment.centerLeft, child: Text(l10n.selectClothingItems)),
           ),
           Expanded(
             child: BlocBuilder<WardrobeCubit, WardrobeState>(
@@ -64,7 +66,7 @@ class _CreateOutfitScreenState extends State<CreateOutfitScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (state.items.isEmpty) {
-                  return const Center(child: Text('Add some clothes first.'));
+                  return Center(child: Text(l10n.addSomeClothesFirst));
                 }
                 final byCategory = <ClothingCategory, List<ClothingItem>>{};
                 for (final item in state.items) {
@@ -76,7 +78,7 @@ class _CreateOutfitScreenState extends State<CreateOutfitScreen> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                         child: Text(
-                          entry.key.label,
+                          entry.key.label(context),
                           style: Theme.of(context).textTheme.titleSmall,
                         ),
                       ),
@@ -107,7 +109,7 @@ class _CreateOutfitScreenState extends State<CreateOutfitScreen> {
               onPressed: _saving ? null : _submit,
               child: _saving
                   ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Save outfit'),
+                  : Text(l10n.saveOutfit),
             ),
           ),
         ],

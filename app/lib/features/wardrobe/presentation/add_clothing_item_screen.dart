@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../cubit/wardrobe_cubit.dart';
 import '../models/clothing_item.dart';
 
@@ -58,8 +59,9 @@ class _AddClothingItemScreenState extends State<AddClothingItemScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Add clothing item')),
+      appBar: AppBar(title: Text(l10n.addClothingItem)),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -75,7 +77,7 @@ class _AddClothingItemScreenState extends State<AddClothingItemScreen> {
                         children: [
                           ListTile(
                             leading: const Icon(Icons.photo_camera),
-                            title: const Text('Take a photo'),
+                            title: Text(l10n.takeAPhoto),
                             onTap: () {
                               Navigator.of(context).pop();
                               _pickImage(ImageSource.camera);
@@ -83,7 +85,7 @@ class _AddClothingItemScreenState extends State<AddClothingItemScreen> {
                           ),
                           ListTile(
                             leading: const Icon(Icons.photo_library),
-                            title: const Text('Choose from gallery'),
+                            title: Text(l10n.chooseFromGallery),
                             onTap: () {
                               Navigator.of(context).pop();
                               _pickImage(ImageSource.gallery);
@@ -110,30 +112,30 @@ class _AddClothingItemScreenState extends State<AddClothingItemScreen> {
               const SizedBox(height: 24),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
-                validator: (value) => (value == null || value.trim().isEmpty) ? 'Required' : null,
+                decoration: InputDecoration(labelText: l10n.name),
+                validator: (value) => (value == null || value.trim().isEmpty) ? l10n.requiredField : null,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<ClothingCategory>(
                 value: _category,
-                decoration: const InputDecoration(labelText: 'Category'),
+                decoration: InputDecoration(labelText: l10n.category),
                 items: [
                   for (final category in ClothingCategory.values)
-                    DropdownMenuItem(value: category, child: Text(category.label)),
+                    DropdownMenuItem(value: category, child: Text(category.label(context))),
                 ],
                 onChanged: (value) => setState(() => _category = value ?? _category),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _colorController,
-                decoration: const InputDecoration(labelText: 'Color (optional)'),
+                decoration: InputDecoration(labelText: l10n.colorOptional),
               ),
               const SizedBox(height: 24),
               FilledButton(
                 onPressed: _saving ? null : _submit,
                 child: _saving
                     ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Text('Save'),
+                    : Text(l10n.save),
               ),
             ],
           ),

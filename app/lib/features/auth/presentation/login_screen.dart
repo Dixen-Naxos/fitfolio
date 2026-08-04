@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 
@@ -35,8 +36,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Fitfolio')),
+      appBar: AppBar(title: Text(l10n.appTitle)),
       body: BlocListener<AuthCubit, AuthState>(
         listenWhen: (previous, current) => current.errorMessage != null,
         listener: (context, state) {
@@ -52,22 +54,22 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Welcome back', style: Theme.of(context).textTheme.headlineSmall),
+                    Text(l10n.welcomeBack, style: Theme.of(context).textTheme.headlineSmall),
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(labelText: 'Email'),
+                      decoration: InputDecoration(labelText: l10n.email),
                       validator: (value) =>
-                          (value == null || !value.contains('@')) ? 'Enter a valid email' : null,
+                          (value == null || !value.contains('@')) ? l10n.emailValidationError : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _passwordController,
                       obscureText: true,
-                      decoration: const InputDecoration(labelText: 'Password'),
+                      decoration: InputDecoration(labelText: l10n.password),
                       validator: (value) =>
-                          (value == null || value.length < 8) ? 'Minimum 8 characters' : null,
+                          (value == null || value.length < 8) ? l10n.passwordValidationError : null,
                     ),
                     const SizedBox(height: 24),
                     BlocBuilder<AuthCubit, AuthState>(
@@ -81,13 +83,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                   width: 16,
                                   child: CircularProgressIndicator(strokeWidth: 2),
                                 )
-                              : const Text('Log in'),
+                              : Text(l10n.logIn),
                         );
                       },
                     ),
                     TextButton(
                       onPressed: () => context.push('/register'),
-                      child: const Text("Don't have an account? Register"),
+                      child: Text(l10n.noAccountRegister),
                     ),
                   ],
                 ),

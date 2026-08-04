@@ -1,24 +1,29 @@
+import 'package:flutter/widgets.dart';
+
+import '../../../l10n/app_localizations.dart';
+
 enum ClothingCategory { top, bottom, outerwear, shoes, accessory, dress, other }
 
 extension ClothingCategoryX on ClothingCategory {
   String get apiValue => name;
 
-  String get label {
+  String label(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     switch (this) {
       case ClothingCategory.top:
-        return 'Top';
+        return l10n.categoryTop;
       case ClothingCategory.bottom:
-        return 'Bottom';
+        return l10n.categoryBottom;
       case ClothingCategory.outerwear:
-        return 'Outerwear';
+        return l10n.categoryOuterwear;
       case ClothingCategory.shoes:
-        return 'Shoes';
+        return l10n.categoryShoes;
       case ClothingCategory.accessory:
-        return 'Accessory';
+        return l10n.categoryAccessory;
       case ClothingCategory.dress:
-        return 'Dress';
+        return l10n.categoryDress;
       case ClothingCategory.other:
-        return 'Other';
+        return l10n.categoryOther;
     }
   }
 

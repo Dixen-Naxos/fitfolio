@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/network/api_client.dart';
@@ -13,6 +14,7 @@ import 'features/outfits/cubit/outfits_cubit.dart';
 import 'features/outfits/data/outfits_repository.dart';
 import 'features/wardrobe/cubit/wardrobe_cubit.dart';
 import 'features/wardrobe/data/wardrobe_repository.dart';
+import 'l10n/app_localizations.dart';
 
 void main() {
   runApp(const FitfolioApp());
@@ -56,6 +58,13 @@ class FitfolioApp extends StatelessWidget {
               debugShowCheckedModeBanner: false,
               theme: AppTheme.light,
               routerConfig: router,
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: AppLocalizations.supportedLocales,
             );
           },
         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../cubit/outfits_cubit.dart';
 import '../cubit/outfits_state.dart';
 import '../models/outfit.dart';
@@ -22,8 +23,9 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('My Outfits')),
+      appBar: AppBar(title: Text(l10n.myOutfits)),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/outfits/create'),
         child: const Icon(Icons.add),
@@ -34,10 +36,10 @@ class _OutfitsScreenState extends State<OutfitsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (state.status == OutfitsStatus.error) {
-            return Center(child: Text(state.errorMessage ?? 'Something went wrong'));
+            return Center(child: Text(state.errorMessage ?? l10n.somethingWentWrong));
           }
           if (state.outfits.isEmpty) {
-            return const Center(child: Text('No outfits yet. Tap + to create one.'));
+            return Center(child: Text(l10n.noOutfitsYet));
           }
           return RefreshIndicator(
             onRefresh: () => context.read<OutfitsCubit>().loadOutfits(),
@@ -62,7 +64,7 @@ class _OutfitTile extends StatelessWidget {
     return ListTile(
       leading: const Icon(Icons.checkroom),
       title: Text(outfit.name),
-      subtitle: Text('${outfit.items.length} item(s)'),
+      subtitle: Text(AppLocalizations.of(context).itemsCount(outfit.items.length)),
       trailing: IconButton(
         icon: const Icon(Icons.delete_outline),
         onPressed: () => context.read<OutfitsCubit>().deleteOutfit(outfit.id),

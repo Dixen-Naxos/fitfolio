@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../cubit/friends_cubit.dart';
 import '../cubit/friends_state.dart';
 
@@ -19,21 +20,22 @@ class _FriendsScreenState extends State<FriendsScreen> {
   }
 
   Future<void> _showAddFriendDialog() async {
+    final l10n = AppLocalizations.of(context);
     final controller = TextEditingController();
     final email = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add a friend'),
+        title: Text(l10n.addAFriend),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.emailAddress,
-          decoration: const InputDecoration(labelText: 'Friend\'s email'),
+          decoration: InputDecoration(labelText: l10n.friendsEmail),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: const Text('Send request'),
+            child: Text(l10n.sendRequest),
           ),
         ],
       ),
@@ -45,9 +47,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Friends'),
+        title: Text(l10n.friends),
         actions: [IconButton(icon: const Icon(Icons.person_add), onPressed: _showAddFriendDialog)],
       ),
       body: BlocConsumer<FriendsCubit, FriendsState>(
@@ -64,14 +67,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
             child: ListView(
               children: [
                 if (state.incomingRequests.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
-                    child: Text('Friend requests', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                    child: Text(l10n.friendRequests, style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                   for (final request in state.incomingRequests)
                     ListTile(
                       leading: const Icon(Icons.person_outline),
-                      title: Text('Request ${request.id.substring(0, 8)}'),
+                      title: Text(l10n.requestLabel(request.id.substring(0, 8))),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -87,14 +90,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       ),
                     ),
                 ],
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
-                  child: Text('Your friends', style: TextStyle(fontWeight: FontWeight.bold)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                  child: Text(l10n.yourFriends, style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
                 if (state.friends.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('No friends yet. Add one using their email.'),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(l10n.noFriendsYet),
                   ),
                 for (final friend in state.friends)
                   ListTile(

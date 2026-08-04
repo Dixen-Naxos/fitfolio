@@ -12,6 +12,11 @@ services:
     restart: always
 
   api:
+    # `build` stays so `docker compose build`/local dev still works, but the CI/CD pipeline
+    # (.github/workflows/api-ci.yml) pushes to Docker Hub and this `image` tag is what
+    # `docker compose pull && up -d` actually deploys on the server - without it, `pull` has
+    # nothing to fetch and `up -d` just keeps running the old locally-built image.
+    image: ${DOCKERHUB_USERNAME}/fitfolio:api
     build:
       context: ./api
     restart: always
@@ -34,6 +39,9 @@ services:
       - "traefik.http.middlewares.fitfolio-https-redirect.redirectscheme.scheme=https"
 
   web:
+    # Same pattern as `api`: `build` supports local dev, `image` is what
+    # `docker compose pull && up -d` (web-ci.yml's SSH redeploy step) actually deploys.
+    image: ${DOCKERHUB_USERNAME}/fitfolio:web
     build:
       context: ./app
       args:

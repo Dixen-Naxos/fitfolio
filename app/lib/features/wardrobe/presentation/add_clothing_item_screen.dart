@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,7 +20,7 @@ class _AddClothingItemScreenState extends State<AddClothingItemScreen> {
   final _nameController = TextEditingController();
   final _colorController = TextEditingController();
   ClothingCategory _category = ClothingCategory.top;
-  XFile? _pickedImage;
+  Uint8List? _pickedImageBytes;
   bool _saving = false;
 
   @override
@@ -33,7 +33,8 @@ class _AddClothingItemScreenState extends State<AddClothingItemScreen> {
   Future<void> _pickImage(ImageSource source) async {
     final image = await ImagePicker().pickImage(source: source, imageQuality: 85);
     if (image != null) {
-      setState(() => _pickedImage = image);
+      final bytes = await image.readAsBytes();
+      setState(() => _pickedImageBytes = bytes);
     }
   }
 
@@ -49,9 +50,8 @@ class _AddClothingItemScreenState extends State<AddClothingItemScreen> {
     );
 
     final newItem = cubit.state.items.isNotEmpty ? cubit.state.items.first : null;
-    if (newItem != null && _pickedImage != null) {
-      final bytes = await _pickedImage!.readAsBytes();
-      await cubit.uploadImage(newItem.id, bytes);
+    if (newItem != null && _pickedImageBytes != null) {
+      await cubit.uploadImage(newItem.id, _pickedImageBytes!);
     }
 
     if (mounted) Navigator.of(context).pop();
@@ -103,8 +103,8 @@ class _AddClothingItemScreenState extends State<AddClothingItemScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: _pickedImage != null
-                        ? Image.file(File(_pickedImage!.path), fit: BoxFit.cover)
+                    child: _pickedImageBytes != null
+                        ? Image.memory(_pickedImageBytes!, fit: BoxFit.cover)
                         : const Icon(Icons.add_a_photo, size: 40),
                   ),
                 ),

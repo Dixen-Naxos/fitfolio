@@ -11,21 +11,12 @@ with images stored in MinIO (S3-compatible object storage).
 - MinIO (S3-compatible) for images, accessed via presigned upload/download URLs
 - JWT auth (access + refresh tokens, refresh rotation, server-side revocation on logout)
 
-## Running locally (via Docker Compose, recommended)
-
-From the repository root:
-
-```bash
-cp api/.env.example api/.env
-docker compose up --build
-docker compose exec api alembic upgrade head
-```
-
-API available at http://localhost:8000, docs at http://localhost:8000/docs.
-
 ## Running locally without Docker
 
-Requires a running PostgreSQL and MinIO (or point `DATABASE_URL`/`MINIO_*` at existing instances).
+The root `docker-compose.yml` is production-oriented (pulls/builds images, requires an external
+Traefik network - see the root [README.md](../README.md)), so for local iteration run the API
+directly instead. Requires a running PostgreSQL and MinIO (or point `DATABASE_URL`/`MINIO_*` at
+existing instances - e.g. `docker run` them standalone, or point at any reachable instances).
 
 ```bash
 cd api
@@ -35,6 +26,8 @@ cp .env.example .env                          # adjust values
 alembic upgrade head
 uvicorn app.main:app --reload
 ```
+
+API available at http://localhost:8000, docs at http://localhost:8000/docs.
 
 ## Tests
 

@@ -1,13 +1,11 @@
 services:
   db:
     image: postgres:16-alpine
-    restart: unless-stopped
+    restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-fitfolio}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fitfolio}
       POSTGRES_DB: ${POSTGRES_DB:-fitfolio}
-    ports:
-      - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
@@ -18,14 +16,14 @@ services:
 
   minio:
     image: minio/minio:latest
-    restart: unless-stopped
+    restart: always
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fitfolio}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-fitfolio123}
     ports:
-      - "9000:9000"   # S3 API
-      - "9001:9001"   # Web console
+      - "127.0.0.1:9000:9000"   # keep S3 API loopback-only; expose via reverse proxy if needed
+      - "127.0.0.1:9001:9001"   # keep console loopback-only
     volumes:
       - minio-data:/data
     healthcheck:
@@ -35,9 +33,13 @@ services:
       retries: 10
 
   api:
+    # `image` is what the CI/CD workflow (.github/workflows/api-ci.yml) pushes to Docker Hub and
+    # what `docker compose pull && up -d` deploys on redeploy. `build` is kept so you can still
+    # `docker compose build`/`up --build` locally if you ever need to test a change without CI.
+    image: ${DOCKERHUB_USERNAME}/fitfolio:api
     build:
       context: ./api
-    restart: unless-stopped
+    restart: always
     env_file:
       - ./api/.env
     environment:
@@ -46,16 +48,48 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-fitfolio}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-fitfolio123}
       MINIO_SECURE: "false"
-    ports:
-      - "8000:8000"
+      # Lock CORS down to the real production frontend origin.
+      CORS_ORIGINS: https://${FRONTEND_DOMAIN_NAME}
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     depends_on:
       db:
         condition: service_healthy
       minio:
         condition: service_healthy
-    volumes:
-      - ./api:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - default   # to reach db/minio
+      - traefik   # so the external Traefik instance can route to this container
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fitfolio-api.rule=Host(`${API_DOMAIN_NAME}`)"
+      - "traefik.http.routers.fitfolio-api.entrypoints=websecure"
+      - "traefik.http.routers.fitfolio-api.tls.certresolver=myresolver"
+      - "traefik.http.services.fitfolio-api.loadbalancer.server.port=8000"
+
+  web:
+    # Same pattern as `api`: `image` is what web-ci.yml's SSH redeploy step deploys, `build`
+    # supports building/testing locally without going through CI.
+    image: ${DOCKERHUB_USERNAME}/fitfolio:web
+    build:
+      context: ./app
+      args:
+        API_BASE_URL: https://${API_DOMAIN_NAME}/api/v1
+    restart: always
+    networks:
+      - traefik   # so the external Traefik instance can route to this container
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fitfolio-web.rule=Host(`${FRONTEND_DOMAIN_NAME}`)"
+      - "traefik.http.routers.fitfolio-web.entrypoints=websecure"
+      - "traefik.http.routers.fitfolio-web.tls.certresolver=myresolver"
+      - "traefik.http.services.fitfolio-web.loadbalancer.server.port=80"
+
+networks:
+  # Pre-existing Traefik instance from another docker-compose project on this server,
+  # created there (e.g. `docker network create traefik` or via that project's own
+  # compose file) - not managed here, just joined.
+  traefik:
+    external: true
 
 volumes:
   db-data:

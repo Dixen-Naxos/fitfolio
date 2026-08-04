@@ -26,17 +26,15 @@ services:
     environment:
       # Lock CORS down to the real production frontend origin instead of the "*" dev default.
       CORS_ORIGINS: https://${FRONTEND_DOMAIN_NAME}
+    networks:
+      - default   # to reach db/minio
+      - traefik   # so the external Traefik instance can route to this container
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.fitfolio-api.rule=Host(`${API_DOMAIN_NAME}`)"
       - "traefik.http.routers.fitfolio-api.entrypoints=websecure"
-      - "traefik.http.routers.fitfolio-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.fitfolio-api.tls.certresolver=myresolver"
       - "traefik.http.services.fitfolio-api.loadbalancer.server.port=8000"
-      # Redirect plain HTTP to HTTPS
-      - "traefik.http.routers.fitfolio-api-http.rule=Host(`${API_DOMAIN_NAME}`)"
-      - "traefik.http.routers.fitfolio-api-http.entrypoints=web"
-      - "traefik.http.routers.fitfolio-api-http.middlewares=fitfolio-https-redirect"
-      - "traefik.http.middlewares.fitfolio-https-redirect.redirectscheme.scheme=https"
 
   web:
     # Same pattern as `api`: `build` supports local dev, `image` is what
@@ -47,37 +45,18 @@ services:
       args:
         API_BASE_URL: https://${API_DOMAIN_NAME}/api/v1
     restart: always
+    networks:
+      - traefik   # so the external Traefik instance can route to this container
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.fitfolio-web.rule=Host(`${FRONTEND_DOMAIN_NAME}`)"
       - "traefik.http.routers.fitfolio-web.entrypoints=websecure"
-      - "traefik.http.routers.fitfolio-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.fitfolio-web.tls.certresolver=myresolver"
       - "traefik.http.services.fitfolio-web.loadbalancer.server.port=80"
-      # Redirect plain HTTP to HTTPS (reuses the same middleware defined on the api service)
-      - "traefik.http.routers.fitfolio-web-http.rule=Host(`${FRONTEND_DOMAIN_NAME}`)"
-      - "traefik.http.routers.fitfolio-web-http.entrypoints=web"
-      - "traefik.http.routers.fitfolio-web-http.middlewares=fitfolio-https-redirect"
 
+networks:
+  # Pre-existing Traefik instance from another docker-compose project on this server,
+  # created there (e.g. `docker network create traefik` or via that project's own
+  # compose file) - not managed here, just joined.
   traefik:
-    image: traefik:v3.1
-    restart: always
-    command:
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
-      # Uncomment to expose the dashboard (put it behind auth/a router rule before enabling):
-      # - "--api.dashboard=true"
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - traefik-letsencrypt:/letsencrypt
-
-volumes:
-  traefik-letsencrypt:
+    external: true

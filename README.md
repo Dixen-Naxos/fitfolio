@@ -48,18 +48,32 @@ See [app/README.md](app/README.md) for more details.
 
 ## Production / self-hosting
 
-`docker-compose.prod.yml` provides an override with persistent volumes and a Traefik reverse proxy
-(automatic HTTPS via Let's Encrypt) suited for a self-hosted VPS/home server deployment.
+`docker-compose.prod.yml` provides an override with persistent volumes suited for a self-hosted
+VPS/home server deployment, and routes both the API and the web frontend through an existing
+Traefik instance (run separately, in another docker-compose project on the same server) over a
+shared external Docker network called `traefik`.
 
 Set the following in a root `.env` file (see [.env.example](.env.example)) before starting:
-- `DOMAIN_NAME` — the domain pointed at your server, e.g. `fitfolio.example.com`
-- `ACME_EMAIL` — an email address used for Let's Encrypt certificate expiry notices
+- `API_DOMAIN_NAME` — the domain pointed at your server for the API, e.g. `api.fitfolio.example.com`
+- `FRONTEND_DOMAIN_NAME` — the domain pointed at your server for the web app, e.g. `fitfolio.example.com`
+- `DOCKERHUB_USERNAME` — required for the CI/CD workflows' `docker compose pull` step to resolve
+  the right image tags
+
+Make sure the external `traefik` network already exists (created by whatever compose project runs
+your Traefik instance) before starting this stack:
 
 ```bash
-cp .env.example .env   # fill in DOMAIN_NAME and ACME_EMAIL
+docker network inspect traefik >/dev/null 2>&1 || docker network create traefik
+```
+
+```bash
+cp .env.example .env   # fill in API_DOMAIN_NAME, FRONTEND_DOMAIN_NAME, DOCKERHUB_USERNAME
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
-Traefik picks up routing for the `api` service automatically via Docker labels (see
-`docker-compose.prod.yml`) and terminates TLS on ports 80/443; the API itself is not published on
-any host port in production.
+Traefik picks up routing for the `api` and `web` services automatically via Docker labels (see
+`docker-compose.prod.yml`); neither is published on any host port directly, only reachable through
+Traefik. Both services use the `myresolver` certificate resolver and the `websecure` entrypoint,
+matching this server's Traefik instance (TLS-ALPN challenge on 443 only, no plain-HTTP entrypoint
+to redirect from). If your Traefik setup ever changes resolver/entrypoint names, update the labels
+in `docker-compose.prod.yml` to match.

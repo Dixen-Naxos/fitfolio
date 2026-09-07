@@ -31,7 +31,12 @@ class _AddClothingItemScreenState extends State<AddClothingItemScreen> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final image = await ImagePicker().pickImage(source: source, imageQuality: 85);
+    final image = await ImagePicker().pickImage(
+      source: source,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageQuality: 80,
+    );
     if (image != null) {
       final bytes = await image.readAsBytes();
       setState(() => _pickedImageBytes = bytes);

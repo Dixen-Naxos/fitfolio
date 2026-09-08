@@ -1,4 +1,5 @@
 from httpx import AsyncClient
+from app.services import storage_service
 
 from tests.conftest import auth_headers, register_user
 
@@ -102,3 +103,40 @@ async def test_clothing_item_isolated_between_owners(client: AsyncClient) -> Non
 
     list_response = await client.get("/api/v1/clothes", headers=auth_headers(other["access_token"]))
     assert list_response.json() == []
+
+
+async def test_delete_clothing_item_removes_image_object(client: AsyncClient, monkeypatch) -> None:
+    user = await register_user(client, "wardrobe-delete-image@example.com")
+    headers = auth_headers(user["access_token"])
+
+    create_response = await client.post(
+        "/api/v1/clothes",
+        json={"name": "Hat", "category": "accessory"},
+        headers=headers,
+    )
+    item_id = create_response.json()["id"]
+
+    upload_url_response = await client.post(
+        f"/api/v1/clothes/{item_id}/image/upload-url",
+        json={"content_type": "image/png"},
+        headers=headers,
+    )
+    object_key = upload_url_response.json()["object_key"]
+
+    confirm_response = await client.post(
+        f"/api/v1/clothes/{item_id}/image/confirm",
+        json={"object_key": object_key},
+        headers=headers,
+    )
+    assert confirm_response.status_code == 200
+
+    deleted_keys: list[str] = []
+
+    def fake_delete_object(key: str) -> None:
+        deleted_keys.append(key)
+
+    monkeypatch.setattr(storage_service, "delete_object", fake_delete_object)
+
+    delete_response = await client.delete(f"/api/v1/clothes/{item_id}", headers=headers)
+    assert delete_response.status_code == 204
+    assert deleted_keys == [object_key]

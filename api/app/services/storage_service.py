@@ -70,3 +70,8 @@ def presigned_upload_url(object_key: str, expires: timedelta = timedelta(minutes
 def presigned_view_url(object_key: str, expires: timedelta = timedelta(hours=1)) -> str:
     client = get_presign_client()
     return client.presigned_get_object(settings.minio_bucket, object_key, expires=expires)
+
+
+def delete_object(object_key: str) -> None:
+    client = get_client()
+    client.remove_object(settings.minio_bucket, object_key)

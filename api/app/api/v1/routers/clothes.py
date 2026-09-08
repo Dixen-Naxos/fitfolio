@@ -3,6 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from minio.error import S3Error
 
 from app.api.deps import get_current_user
 from app.db.session import get_db
@@ -117,6 +118,17 @@ async def delete_clothing_item(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     item = await _get_owned_item(db, item_id, current_user.id)
+
+    if item.image_key:
+        try:
+            storage_service.delete_object(item.image_key)
+        except S3Error as exc:
+            if exc.code not in {"NoSuchKey", "NoSuchObject"}:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Failed to delete clothing image from storage",
+                ) from exc
+
     await db.delete(item)
     await db.commit()
 

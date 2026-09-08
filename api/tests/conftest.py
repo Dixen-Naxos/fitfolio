@@ -44,6 +44,7 @@ def _stub_storage(monkeypatch):
     monkeypatch.setattr(storage_service, "presigned_upload_url", fake_upload_url)
     monkeypatch.setattr(storage_service, "presigned_view_url", fake_view_url)
     monkeypatch.setattr(storage_service, "build_object_key", fake_build_object_key)
+    monkeypatch.setattr(storage_service, "delete_object", lambda object_key: None)
     monkeypatch.setattr(storage_service, "ensure_bucket", lambda: None)
 
 

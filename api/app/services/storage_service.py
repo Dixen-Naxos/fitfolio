@@ -15,6 +15,7 @@ _ALLOWED_CONTENT_TYPES = {
 DEFAULT_EXTENSION = "jpg"
 
 _client: Minio | None = None
+_presign_client: Minio | None = None
 
 
 def get_client() -> Minio:
@@ -27,6 +28,23 @@ def get_client() -> Minio:
             secure=settings.minio_secure,
         )
     return _client
+
+
+def get_presign_client() -> Minio:
+    global _presign_client
+    if _presign_client is None:
+        endpoint = settings.minio_presign_endpoint or settings.minio_endpoint
+        secure = settings.minio_presign_secure
+        if secure is None:
+            secure = settings.minio_secure
+
+        _presign_client = Minio(
+            endpoint,
+            access_key=settings.minio_access_key,
+            secret_key=settings.minio_secret_key,
+            secure=secure,
+        )
+    return _presign_client
 
 
 def ensure_bucket() -> None:
@@ -45,10 +63,10 @@ def build_object_key(namespace: str, owner_id: uuid.UUID, resource_id: uuid.UUID
 
 
 def presigned_upload_url(object_key: str, expires: timedelta = timedelta(minutes=10)) -> str:
-    client = get_client()
+    client = get_presign_client()
     return client.presigned_put_object(settings.minio_bucket, object_key, expires=expires)
 
 
 def presigned_view_url(object_key: str, expires: timedelta = timedelta(hours=1)) -> str:
-    client = get_client()
+    client = get_presign_client()
     return client.presigned_get_object(settings.minio_bucket, object_key, expires=expires)

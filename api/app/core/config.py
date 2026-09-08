@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     minio_secret_key: str = "fitfolio123"
     minio_bucket: str = "fitfolio-images"
     minio_secure: bool = False
+    # Optional externally reachable endpoint used only to sign browser/mobile-facing presigned URLs.
+    # Keep MINIO_ENDPOINT internal for server-to-server MinIO operations.
+    minio_presign_endpoint: str | None = None
+    minio_presign_secure: bool | None = None
 
     # CORS
     cors_origins: str = "*"

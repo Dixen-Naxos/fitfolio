@@ -18,6 +18,10 @@ Traefik network - see the root [README.md](../README.md)), so for local iteratio
 directly instead. Requires a running PostgreSQL and MinIO (or point `DATABASE_URL`/`MINIO_*` at
 existing instances - e.g. `docker run` them standalone, or point at any reachable instances).
 
+If your API reaches MinIO on an internal/private address but clients are on the public internet,
+set `MINIO_PRESIGN_ENDPOINT` (and optionally `MINIO_PRESIGN_SECURE`) so generated presigned URLs
+use a client-reachable host while server-side MinIO operations keep using `MINIO_ENDPOINT`.
+
 ```bash
 cd api
 uv venv .venv && source .venv/bin/activate   # or: python3 -m venv .venv

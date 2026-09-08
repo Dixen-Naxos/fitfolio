@@ -26,8 +26,8 @@ docker-compose project on the same server) over a shared external Docker network
 
 ### First deployment
 
-1. **DNS**: point `A`/`AAAA` records for both `API_DOMAIN_NAME` and `FRONTEND_DOMAIN_NAME` at this
-   server's IP - required before Traefik can issue certificates.
+1. **DNS**: point `A`/`AAAA` records for `API_DOMAIN_NAME`, `FRONTEND_DOMAIN_NAME`, and
+   `MINIO_API_DOMAIN_NAME` at this server's IP - required before Traefik can issue certificates.
 2. **Clone the repo** on the server into the path the CI/CD workflows expect (`~/fitfolio`, since
    `.github/workflows/*-ci.yml`'s redeploy step does `cd fitfolio/`):
    ```bash
@@ -37,8 +37,9 @@ docker-compose project on the same server) over a shared external Docker network
    ```bash
    cp .env.example .env
    ```
-   Fill in `API_DOMAIN_NAME`, `FRONTEND_DOMAIN_NAME`, `DOCKERHUB_USERNAME`. Also consider setting
-   `POSTGRES_PASSWORD`/`MINIO_ROOT_PASSWORD` to something other than the defaults.
+   Fill in `API_DOMAIN_NAME`, `FRONTEND_DOMAIN_NAME`, `MINIO_API_DOMAIN_NAME`,
+   `DOCKERHUB_USERNAME`. Also consider setting `POSTGRES_PASSWORD`/`MINIO_ROOT_PASSWORD` to
+   something other than the defaults.
 4. **`api/.env`** (the API service's own settings - `docker-compose.yml` requires this file to
    exist even if empty):
    ```bash
@@ -73,12 +74,14 @@ needed unless there's a new migration to run.
 Set the following in the root `.env` file (see [.env.example](.env.example)):
 - `API_DOMAIN_NAME` — the domain pointed at your server for the API, e.g. `api.fitfolio.example.com`
 - `FRONTEND_DOMAIN_NAME` — the domain pointed at your server for the web app, e.g. `fitfolio.example.com`
+- `MINIO_API_DOMAIN_NAME` — the domain pointed at your server for MinIO S3 API traffic (used in
+   presigned upload/download URLs), e.g. `minio.fitfolio.example.com`
 - `DOCKERHUB_USERNAME` — required for the CI/CD workflows' `docker compose pull` step to resolve
   the right image tags
 
-Traefik picks up routing for the `api` and `web` services automatically via Docker labels (see
-`docker-compose.yml`); neither is published on any host port directly, only reachable through
-Traefik. Both services use the `myresolver` certificate resolver and the `websecure` entrypoint,
-matching this server's Traefik instance (TLS-ALPN challenge on 443 only, no plain-HTTP entrypoint
-to redirect from). If your Traefik setup ever changes resolver/entrypoint names, update the labels
-in `docker-compose.yml` to match.
+Traefik picks up routing for the `api`, `web`, and `minio` services automatically via Docker
+labels (see `docker-compose.yml`); none are published on public host ports directly, only reachable
+through Traefik. All three use the `myresolver` certificate resolver and the `websecure`
+entrypoint, matching this server's Traefik instance (TLS-ALPN challenge on 443 only, no
+plain-HTTP entrypoint to redirect from). If your Traefik setup ever changes resolver/entrypoint
+names, update the labels in `docker-compose.yml` to match.

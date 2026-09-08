@@ -26,6 +26,15 @@ services:
       - "127.0.0.1:9001:9001"   # keep console loopback-only
     volumes:
       - minio-data:/data
+    networks:
+      - default
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fitfolio-minio.rule=Host(`${MINIO_API_DOMAIN_NAME}`)"
+      - "traefik.http.routers.fitfolio-minio.entrypoints=websecure"
+      - "traefik.http.routers.fitfolio-minio.tls.certresolver=myresolver"
+      - "traefik.http.services.fitfolio-minio.loadbalancer.server.port=9000"
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
@@ -45,6 +54,8 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-fitfolio}:${POSTGRES_PASSWORD:-fitfolio}@db:5432/${POSTGRES_DB:-fitfolio}
       MINIO_ENDPOINT: minio:9000
+      MINIO_PRESIGN_ENDPOINT: ${MINIO_API_DOMAIN_NAME}
+      MINIO_PRESIGN_SECURE: "true"
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-fitfolio}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-fitfolio123}
       MINIO_SECURE: "false"

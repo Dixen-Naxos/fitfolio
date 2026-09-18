@@ -130,7 +130,9 @@ class _ClothingItemCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        item.category.label(context),
+                        item.subcategory != null && item.subcategory!.isNotEmpty
+                            ? '${item.category.label(context)} · ${item.subcategory}'
+                            : item.category.label(context),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),

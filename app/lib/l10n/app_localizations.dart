@@ -62,6 +62,7 @@ abstract class AppLocalizations {
   String get categoryShoes;
   String get categoryAccessory;
   String get categoryDress;
+  String get categoryLingerie;
   String get categoryOther;
 
   // Outfits
@@ -160,6 +161,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryAccessory => 'Accessory';
   @override
   String get categoryDress => 'Dress';
+  @override
+  String get categoryLingerie => 'Lingerie';
   @override
   String get categoryOther => 'Other';
 
@@ -274,6 +277,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get categoryAccessory => 'Accessoire';
   @override
   String get categoryDress => 'Robe';
+  @override
+  String get categoryLingerie => 'Lingerie';
   @override
   String get categoryOther => 'Autre';
 

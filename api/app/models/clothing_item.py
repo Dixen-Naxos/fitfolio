@@ -20,6 +20,7 @@ class ClothingCategory(str, enum.Enum):
     shoes = "shoes"
     accessory = "accessory"
     dress = "dress"
+    lingerie = "lingerie"
     other = "other"
 
 
@@ -36,6 +37,7 @@ class ClothingItem(Base):
     category: Mapped[ClothingCategory] = mapped_column(
         Enum(ClothingCategory, name="clothing_category"), nullable=False
     )
+    subcategory: Mapped[str | None] = mapped_column(String(80), nullable=True)
     color: Mapped[str | None] = mapped_column(String(50), nullable=True)
     tags: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
     image_key: Mapped[str | None] = mapped_column(String(500), nullable=True)

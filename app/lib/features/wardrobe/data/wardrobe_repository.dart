@@ -25,13 +25,20 @@ class WardrobeRepository {
   Future<ClothingItem> createClothingItem({
     required String name,
     required ClothingCategory category,
+    String? subcategory,
     String? color,
     List<String> tags = const [],
   }) async {
     try {
       final response = await _apiClient.dio.post(
         '/clothes',
-        data: {'name': name, 'category': category.apiValue, 'color': color, 'tags': tags},
+        data: {
+          'name': name,
+          'category': category.apiValue,
+          if (subcategory != null && subcategory.isNotEmpty) 'subcategory': subcategory,
+          'color': color,
+          'tags': tags,
+        },
       );
       return ClothingItem.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
@@ -43,6 +50,7 @@ class WardrobeRepository {
     String id, {
     String? name,
     ClothingCategory? category,
+    String? subcategory,
     String? color,
     List<String>? tags,
   }) async {
@@ -52,6 +60,7 @@ class WardrobeRepository {
         data: {
           if (name != null) 'name': name,
           if (category != null) 'category': category.apiValue,
+          if (subcategory != null) 'subcategory': subcategory,
           if (color != null) 'color': color,
           if (tags != null) 'tags': tags,
         },

@@ -27,6 +27,7 @@ class WardrobeCubit extends Cubit<WardrobeState> {
   Future<void> addItem({
     required String name,
     required ClothingCategory category,
+    String? subcategory,
     String? color,
     List<String> tags = const [],
   }) async {
@@ -34,6 +35,7 @@ class WardrobeCubit extends Cubit<WardrobeState> {
       final item = await _repository.createClothingItem(
         name: name,
         category: category,
+        subcategory: subcategory,
         color: color,
         tags: tags,
       );

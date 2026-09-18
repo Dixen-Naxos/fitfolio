@@ -10,17 +10,33 @@ async def test_create_and_list_clothing_items(client: AsyncClient) -> None:
 
     create_response = await client.post(
         "/api/v1/clothes",
-        json={"name": "Blue Jeans", "category": "bottom", "color": "blue", "tags": ["casual"]},
+        json={
+            "name": "Blue Jeans",
+            "category": "bottom",
+            "subcategory": "Jean",
+            "color": "blue",
+            "tags": ["casual"],
+        },
         headers=headers,
     )
     assert create_response.status_code == 201
     item = create_response.json()
     assert item["name"] == "Blue Jeans"
+    assert item["subcategory"] == "Jean"
     assert item["image_url"] is None
 
     list_response = await client.get("/api/v1/clothes", headers=headers)
     assert list_response.status_code == 200
     assert len(list_response.json()) == 1
+
+    lingerie_response = await client.post(
+        "/api/v1/clothes",
+        json={"name": "Black Bra", "category": "lingerie", "subcategory": "Brassières"},
+        headers=headers,
+    )
+    assert lingerie_response.status_code == 201
+    assert lingerie_response.json()["category"] == "lingerie"
+    assert lingerie_response.json()["subcategory"] == "Brassières"
 
 
 async def test_update_and_delete_clothing_item(client: AsyncClient) -> None:

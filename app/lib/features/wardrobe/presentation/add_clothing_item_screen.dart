@@ -20,8 +20,15 @@ class _AddClothingItemScreenState extends State<AddClothingItemScreen> {
   final _nameController = TextEditingController();
   final _colorController = TextEditingController();
   ClothingCategory _category = ClothingCategory.top;
+  String? _subcategory;
   Uint8List? _pickedImageBytes;
   bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _subcategory = _category.defaultSubcategory;
+  }
 
   @override
   void dispose() {
@@ -51,6 +58,7 @@ class _AddClothingItemScreenState extends State<AddClothingItemScreen> {
     await cubit.addItem(
       name: _nameController.text.trim(),
       category: _category,
+      subcategory: _subcategory,
       color: _colorController.text.trim().isEmpty ? null : _colorController.text.trim(),
     );
 
@@ -128,8 +136,26 @@ class _AddClothingItemScreenState extends State<AddClothingItemScreen> {
                   for (final category in ClothingCategory.values)
                     DropdownMenuItem(value: category, child: Text(category.label(context))),
                 ],
-                onChanged: (value) => setState(() => _category = value ?? _category),
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() {
+                    _category = value;
+                    _subcategory = _category.defaultSubcategory;
+                  });
+                },
               ),
+              if ((_category.availableSubcategories).isNotEmpty) ...[
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _subcategory,
+                  decoration: const InputDecoration(labelText: 'Sous-catégorie'),
+                  items: [
+                    for (final option in _category.availableSubcategories)
+                      DropdownMenuItem(value: option, child: Text(option)),
+                  ],
+                  onChanged: (value) => setState(() => _subcategory = value ?? _subcategory),
+                ),
+              ],
               const SizedBox(height: 12),
               TextFormField(
                 controller: _colorController,

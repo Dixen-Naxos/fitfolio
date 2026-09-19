@@ -68,35 +68,47 @@ class _CreateOutfitScreenState extends State<CreateOutfitScreen> {
                 if (state.items.isEmpty) {
                   return Center(child: Text(l10n.addSomeClothesFirst));
                 }
-                final byCategory = <ClothingCategory, List<ClothingItem>>{};
+                final byCategory = <ClothingCategory, Map<String, List<ClothingItem>>>{};
                 for (final item in state.items) {
-                  byCategory.putIfAbsent(item.category, () => []).add(item);
+                  final bySubcategory = byCategory.putIfAbsent(item.category, () => {});
+                  final subcategoryKey = item.subcategory ?? '';
+                  bySubcategory.putIfAbsent(subcategoryKey, () => []).add(item);
                 }
                 return ListView(
                   children: [
-                    for (final entry in byCategory.entries) ...[
+                    for (final categoryEntry in byCategory.entries) ...[
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                         child: Text(
-                          entry.key.label(context),
+                          categoryEntry.key.label(context),
                           style: Theme.of(context).textTheme.titleSmall,
                         ),
                       ),
-                      for (final item in entry.value)
-                        CheckboxListTile(
-                          value: _selectedItemIds.contains(item.id),
-                          title: Text(item.name),
-                          secondary: item.imageUrl != null
-                              ? CircleAvatar(backgroundImage: NetworkImage(item.imageUrl!))
-                              : const CircleAvatar(child: Icon(Icons.checkroom)),
-                          onChanged: (checked) => setState(() {
-                            if (checked ?? false) {
-                              _selectedItemIds.add(item.id);
-                            } else {
-                              _selectedItemIds.remove(item.id);
-                            }
-                          }),
-                        ),
+                      for (final subcategoryEntry in categoryEntry.value.entries) ...[
+                        if (subcategoryEntry.key.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 8, 16, 4),
+                            child: Text(
+                              subcategoryEntry.key,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                        for (final item in subcategoryEntry.value)
+                          CheckboxListTile(
+                            value: _selectedItemIds.contains(item.id),
+                            title: Text(item.name),
+                            secondary: item.imageUrl != null
+                                ? CircleAvatar(backgroundImage: NetworkImage(item.imageUrl!))
+                                : const CircleAvatar(child: Icon(Icons.checkroom)),
+                            onChanged: (checked) => setState(() {
+                              if (checked ?? false) {
+                                _selectedItemIds.add(item.id);
+                              } else {
+                                _selectedItemIds.remove(item.id);
+                              }
+                            }),
+                          ),
+                      ],
                     ],
                   ],
                 );

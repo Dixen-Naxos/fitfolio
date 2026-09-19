@@ -16,6 +16,7 @@ class WardrobeScreen extends StatefulWidget {
 
 class _WardrobeScreenState extends State<WardrobeScreen> {
   ClothingCategory? _filter;
+  String? _subFilter;
 
   @override
   void initState() {
@@ -41,9 +42,13 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
             return Center(child: Text(state.errorMessage ?? l10n.somethingWentWrong));
           }
 
-          final items = _filter == null
-              ? state.items
-              : state.items.where((i) => i.category == _filter).toList();
+          final items = state.items.where((i) {
+            if (_filter != null && i.category != _filter) return false;
+            if (_subFilter != null && i.subcategory != _subFilter) return false;
+            return true;
+          }).toList();
+
+          final subcategoryOptions = _filter?.availableSubcategories ?? const <String>[];
 
           return RefreshIndicator(
             onRefresh: () => context.read<WardrobeCubit>().loadItems(),
@@ -60,7 +65,10 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                         child: ChoiceChip(
                           label: Text(l10n.allFilter),
                           selected: _filter == null,
-                          onSelected: (_) => setState(() => _filter = null),
+                          onSelected: (_) => setState(() {
+                            _filter = null;
+                            _subFilter = null;
+                          }),
                         ),
                       ),
                       for (final category in ClothingCategory.values)
@@ -69,12 +77,42 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                           child: ChoiceChip(
                             label: Text(category.label(context)),
                             selected: _filter == category,
-                            onSelected: (_) => setState(() => _filter = category),
+                            onSelected: (_) => setState(() {
+                              _filter = category;
+                              _subFilter = null;
+                            }),
                           ),
                         ),
                     ],
                   ),
                 ),
+                if (subcategoryOptions.isNotEmpty)
+                  SizedBox(
+                    height: 40,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: ChoiceChip(
+                            label: Text(l10n.allFilter),
+                            selected: _subFilter == null,
+                            onSelected: (_) => setState(() => _subFilter = null),
+                          ),
+                        ),
+                        for (final subcategory in subcategoryOptions)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: ChoiceChip(
+                              label: Text(subcategory),
+                              selected: _subFilter == subcategory,
+                              onSelected: (_) => setState(() => _subFilter = subcategory),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 Expanded(
                   child: items.isEmpty
                       ? Center(child: Text(l10n.noClothesYet))

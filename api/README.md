@@ -1,26 +1,26 @@
 # Fitfolio API
 
 FastAPI backend for the Fitfolio app: accounts, clothing items, outfits, friends and sharing,
-with images stored in MinIO (S3-compatible object storage).
+with images stored in Garage (S3-compatible object storage).
 
 ## Stack
 
 - FastAPI (async) + Pydantic v2
 - SQLAlchemy 2.0 (async) + Alembic migrations
 - PostgreSQL
-- MinIO (S3-compatible) for images, accessed via presigned upload/download URLs
+- Garage (S3-compatible), accessed via the `minio` Python SDK using presigned upload/download URLs
 - JWT auth (access + refresh tokens, refresh rotation, server-side revocation on logout)
 
 ## Running locally without Docker
 
 The root `docker-compose.yml` is production-oriented (pulls/builds images, requires an external
 Traefik network - see the root [README.md](../README.md)), so for local iteration run the API
-directly instead. Requires a running PostgreSQL and MinIO (or point `DATABASE_URL`/`MINIO_*` at
+directly instead. Requires a running PostgreSQL and Garage (or point `DATABASE_URL`/`MINIO_*` at
 existing instances - e.g. `docker run` them standalone, or point at any reachable instances).
 
-If your API reaches MinIO on an internal/private address but clients are on the public internet,
+If your API reaches Garage on an internal/private address but clients are on the public internet,
 set `MINIO_PRESIGN_ENDPOINT` (and optionally `MINIO_PRESIGN_SECURE`) so generated presigned URLs
-use a client-reachable host while server-side MinIO operations keep using `MINIO_ENDPOINT`.
+use a client-reachable host while server-side operations keep using `MINIO_ENDPOINT`.
 
 ```bash
 cd api
@@ -47,13 +47,13 @@ pytest
 
 ```
 app/
-  main.py               FastAPI app, router registration, startup (MinIO bucket init)
+  main.py               FastAPI app, router registration, startup (bucket init)
   core/                 settings (config.py), password hashing + JWT (security.py)
   db/                   async engine/session (session.py), declarative base (base.py)
   models/                SQLAlchemy models (User, ClothingItem, Outfit, OutfitItem, Friendship, Share, RevokedToken)
   schemas/                Pydantic request/response models
   api/v1/routers/         auth, users, clothes, outfits, friends, shares
-  services/storage_service.py   MinIO client, presigned URL generation
+  services/storage_service.py   S3 client (Garage), presigned URL generation
 alembic/                 migrations
 tests/                   pytest suite (httpx ASGI client + SQLite)
 ```
@@ -64,7 +64,7 @@ tests/                   pytest suite (httpx ASGI client + SQLite)
 - `GET/PATCH /api/v1/users/me`
 - `GET/POST /api/v1/clothes`, `GET/PATCH/DELETE /api/v1/clothes/{id}`
 - `POST /api/v1/clothes/{id}/image/upload-url` then `POST /api/v1/clothes/{id}/image/confirm`
-  (client uploads image bytes directly to the presigned MinIO URL)
+  (client uploads image bytes directly to the presigned Garage URL)
 - `GET/POST /api/v1/outfits`, `GET/PATCH/DELETE /api/v1/outfits/{id}`, `PUT /api/v1/outfits/{id}/items`
 - `POST /api/v1/friends/requests`, `GET /api/v1/friends/requests`, `POST .../accept`, `POST .../decline`,
   `GET /api/v1/friends`, `DELETE /api/v1/friends/{id}`
@@ -73,7 +73,7 @@ tests/                   pytest suite (httpx ASGI client + SQLite)
 
 ## Security notes
 
-- Passwords hashed with bcrypt; JWT secret and DB/MinIO credentials are supplied via environment
+- Passwords hashed with bcrypt; JWT secret and DB/Garage credentials are supplied via environment
   variables (see `.env.example`) and must never be committed.
 - Access tokens are short-lived; refresh tokens rotate on use and can be revoked (logout), tracked
   via a `revoked_tokens` table.

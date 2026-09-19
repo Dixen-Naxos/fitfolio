@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     minio_secret_key: str = "fitfolio123"
     minio_bucket: str = "fitfolio-images"
     minio_secure: bool = False
+    # Must match the S3-compatible server's configured region (e.g. Garage's `s3_region`),
+    # otherwise SigV4 signature validation fails.
+    minio_region: str = "garage"
     # Optional externally reachable endpoint used only to sign browser/mobile-facing presigned URLs.
     # Keep MINIO_ENDPOINT internal for server-to-server MinIO operations.
     minio_presign_endpoint: str | None = None

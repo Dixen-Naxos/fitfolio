@@ -14,29 +14,35 @@ services:
       timeout: 5s
       retries: 10
 
-  minio:
-    image: minio/minio:latest
+  garage:
+    # MinIO's OSS image was discontinued/archived in favor of their paid "AIStor" product,
+    # so we use Garage (https://garagehq.deuxfleurs.fr) instead - a lightweight, actively
+    # maintained, self-hosted S3-compatible store. It speaks the same S3 API, so the API
+    # service still talks to it via the `minio` Python SDK unchanged.
+    image: dxflrs/garage:v2.3.0
     restart: always
-    command: server /data --console-address ":9001"
+    command: ["/garage", "server", "--single-node", "--default-bucket"]
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fitfolio}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-fitfolio123}
+      GARAGE_DEFAULT_ACCESS_KEY: ${GARAGE_ACCESS_KEY:-fitfolio}
+      GARAGE_DEFAULT_SECRET_KEY: ${GARAGE_SECRET_KEY:-fitfolio123fitfolio123fitfolio1}
+      GARAGE_DEFAULT_BUCKET: ${GARAGE_BUCKET:-fitfolio-images}
     ports:
-      - "127.0.0.1:9000:9000"   # keep S3 API loopback-only; expose via reverse proxy if needed
-      - "127.0.0.1:9001:9001"   # keep console loopback-only
+      - "127.0.0.1:3900:3900"   # keep S3 API loopback-only; expose via reverse proxy if needed
     volumes:
-      - minio-data:/data
+      - ./garage/garage.toml:/etc/garage.toml:ro
+      - garage-meta:/data/meta
+      - garage-data:/data/data
     networks:
       - default
       - traefik
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.fitfolio-minio.rule=Host(`${MINIO_API_DOMAIN_NAME}`)"
-      - "traefik.http.routers.fitfolio-minio.entrypoints=websecure"
-      - "traefik.http.routers.fitfolio-minio.tls.certresolver=myresolver"
-      - "traefik.http.services.fitfolio-minio.loadbalancer.server.port=9000"
+      - "traefik.http.routers.fitfolio-garage.rule=Host(`${GARAGE_API_DOMAIN_NAME}`)"
+      - "traefik.http.routers.fitfolio-garage.entrypoints=websecure"
+      - "traefik.http.routers.fitfolio-garage.tls.certresolver=myresolver"
+      - "traefik.http.services.fitfolio-garage.loadbalancer.server.port=3900"
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "/garage", "status"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -53,22 +59,24 @@ services:
       - ./api/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-fitfolio}:${POSTGRES_PASSWORD:-fitfolio}@db:5432/${POSTGRES_DB:-fitfolio}
-      MINIO_ENDPOINT: minio:9000
-      MINIO_PRESIGN_ENDPOINT: ${MINIO_API_DOMAIN_NAME}
+      MINIO_ENDPOINT: garage:3900
+      MINIO_PRESIGN_ENDPOINT: ${GARAGE_API_DOMAIN_NAME}
       MINIO_PRESIGN_SECURE: "true"
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-fitfolio}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-fitfolio123}
+      MINIO_ACCESS_KEY: ${GARAGE_ACCESS_KEY:-fitfolio}
+      MINIO_SECRET_KEY: ${GARAGE_SECRET_KEY:-fitfolio123fitfolio123fitfolio1}
+      MINIO_BUCKET: ${GARAGE_BUCKET:-fitfolio-images}
       MINIO_SECURE: "false"
+      MINIO_REGION: garage
       # Lock CORS down to the real production frontend origin.
       CORS_ORIGINS: https://${FRONTEND_DOMAIN_NAME}
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     depends_on:
       db:
         condition: service_healthy
-      minio:
+      garage:
         condition: service_healthy
     networks:
-      - default   # to reach db/minio
+      - default   # to reach db/garage
       - traefik   # so the external Traefik instance can route to this container
     labels:
       - "traefik.enable=true"
@@ -104,4 +112,5 @@ networks:
 
 volumes:
   db-data:
-  minio-data:
+  garage-meta:
+  garage-data:

@@ -61,7 +61,7 @@ services:
       MINIO_SECURE: "false"
       # Lock CORS down to the real production frontend origin.
       CORS_ORIGINS: https://${FRONTEND_DOMAIN_NAME}
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     depends_on:
       db:
         condition: service_healthy

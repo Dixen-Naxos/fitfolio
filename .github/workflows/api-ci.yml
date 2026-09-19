@@ -41,6 +41,7 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script: |
             cd fitfolio/
+            git pull
             docker compose pull 
             docker compose up -d
             docker image prune -f

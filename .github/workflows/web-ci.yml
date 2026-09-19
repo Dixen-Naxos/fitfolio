@@ -45,8 +45,10 @@ jobs:
           password: ${{ secrets.SERVER_PWD }}
           port: ${{ secrets.SERVER_PORT }}
           script: |
+            set -e
             cd fitfolio/
-            git pull
+            git fetch origin
+            git reset --hard origin/main
             docker compose pull
-            docker compose up -d
+            docker compose up -d --force-recreate
             docker image prune -f

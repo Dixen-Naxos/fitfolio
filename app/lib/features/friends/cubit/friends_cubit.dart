@@ -47,4 +47,23 @@ class FriendsCubit extends Cubit<FriendsState> {
       emit(state.copyWith(errorMessage: e.message));
     }
   }
+
+  Future<bool> shareOutfit(String outfitId, String friendEmail) async {
+    try {
+      await _repository.shareOutfit(outfitId, friendEmail);
+      return true;
+    } on ApiException catch (e) {
+      emit(state.copyWith(errorMessage: e.message));
+      return false;
+    }
+  }
+
+  Future<void> loadSharedWithMe() async {
+    try {
+      final shared = await _repository.sharedWithMe();
+      emit(state.copyWith(sharedWithMe: shared));
+    } on ApiException catch (e) {
+      emit(state.copyWith(errorMessage: e.message));
+    }
+  }
 }

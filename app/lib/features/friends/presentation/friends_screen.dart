@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../cubit/friends_cubit.dart';
@@ -104,6 +105,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     leading: const CircleAvatar(child: Icon(Icons.person)),
                     title: Text(friend.user.displayName),
                     subtitle: Text(friend.user.email),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/friends/shared', extra: friend),
                   ),
               ],
             ),

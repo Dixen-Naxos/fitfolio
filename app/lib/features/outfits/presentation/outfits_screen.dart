@@ -65,6 +65,7 @@ class _OutfitTile extends StatelessWidget {
       leading: const Icon(Icons.checkroom),
       title: Text(outfit.name),
       subtitle: Text(AppLocalizations.of(context).itemsCount(outfit.items.length)),
+      onTap: () => context.push('/outfits/detail', extra: outfit),
       trailing: IconButton(
         icon: const Icon(Icons.delete_outline),
         onPressed: () => context.read<OutfitsCubit>().deleteOutfit(outfit.id),

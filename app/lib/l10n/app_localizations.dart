@@ -85,6 +85,17 @@ abstract class AppLocalizations {
   String requestLabel(String id);
   String get yourFriends;
   String get noFriendsYet;
+
+  // Sharing
+  String get shareWithAFriend;
+  String get selectAFriend;
+  String get noFriendsToShareWith;
+  String outfitSharedWith(String name);
+  String get outfitItems;
+  String get emptyOutfit;
+  String get sharedOutfits;
+  String get noSharedOutfits;
+  String get viewSharedOutfits;
 }
 
 class AppLocalizationsEn extends AppLocalizations {
@@ -201,6 +212,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get yourFriends => 'Your friends';
   @override
   String get noFriendsYet => 'No friends yet. Add one using their email.';
+
+  @override
+  String get shareWithAFriend => 'Share with a friend';
+  @override
+  String get selectAFriend => 'Select a friend';
+  @override
+  String get noFriendsToShareWith => 'You have no friends to share with yet.';
+  @override
+  String outfitSharedWith(String name) => 'Outfit shared with $name';
+  @override
+  String get outfitItems => 'Items in this outfit';
+  @override
+  String get emptyOutfit => 'This outfit has no items.';
+  @override
+  String get sharedOutfits => 'Shared outfits';
+  @override
+  String get noSharedOutfits => 'No outfits shared with you yet.';
+  @override
+  String get viewSharedOutfits => 'Tap to view shared outfits';
 }
 
 class AppLocalizationsFr extends AppLocalizations {
@@ -317,6 +347,25 @@ class AppLocalizationsFr extends AppLocalizations {
   String get yourFriends => 'Vos amis';
   @override
   String get noFriendsYet => "Aucun ami pour l'instant. Ajoutez-en un avec son e-mail.";
+
+  @override
+  String get shareWithAFriend => 'Partager avec un ami';
+  @override
+  String get selectAFriend => 'Choisir un ami';
+  @override
+  String get noFriendsToShareWith => "Vous n'avez pas encore d'amis avec qui partager.";
+  @override
+  String outfitSharedWith(String name) => 'Tenue partagée avec $name';
+  @override
+  String get outfitItems => 'Articles de cette tenue';
+  @override
+  String get emptyOutfit => "Cette tenue n'a aucun article.";
+  @override
+  String get sharedOutfits => 'Tenues partagées';
+  @override
+  String get noSharedOutfits => "Aucune tenue partagée avec vous pour l'instant.";
+  @override
+  String get viewSharedOutfits => 'Appuyez pour voir les tenues partagées';
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

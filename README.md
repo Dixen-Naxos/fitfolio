@@ -85,3 +85,145 @@ through Traefik. All three use the `myresolver` certificate resolver and the `we
 entrypoint, matching this server's Traefik instance (TLS-ALPN challenge on 443 only, no
 plain-HTTP entrypoint to redirect from). If your Traefik setup ever changes resolver/entrypoint
 names, update the labels in `docker-compose.yml` to match.
+
+## TODO / Roadmap
+
+An audit of the current codebase surfaced the following gaps and improvement
+opportunities. Items are grouped by area and roughly ordered by priority within
+each group. This is a living list — check items off as they land.
+
+### Security (highest priority)
+
+- [ ] **Fail-fast config validation**: reject placeholder `JWT_SECRET_KEY`,
+  wildcard CORS, and default DB/Garage credentials at startup in production
+  (`api/app/core/config.py`, `api/app/main.py`). Nothing currently prevents
+  deploying with insecure defaults.
+- [ ] **Remove tracked secrets**: ensure `api/.env` is not committed (only
+  `api/.env.example` should be), and move the hardcoded `rpc_secret` out of
+  `garage/garage.toml`.
+- [ ] **Rate limiting / brute-force protection** on auth endpoints
+  (`api/app/api/v1/routers/auth.py`) — currently fully exposed to credential
+  stuffing.
+- [ ] **Access-token revocation**: `get_current_user` does not consult
+  revocation state (`api/app/api/deps.py`); only refresh-token jtis are stored.
+  Add revocation checks and "log out all sessions" support.
+- [ ] **File-upload hardening**: reject unknown `content_type` instead of
+  silently coercing to `.jpg` (`api/app/services/storage_service.py`); verify
+  object existence (HEAD), MIME type, and size before `confirm-image` accepts a
+  key (`api/app/api/v1/routers/clothes.py`).
+- [ ] **Stronger password policy**: registration only enforces `min_length=8`
+  (`api/app/schemas/auth.py`). Add complexity/breach screening if desired.
+- [ ] **Case-insensitive email uniqueness** at the DB layer
+  (`api/app/models/user.py`).
+- [ ] **TrustedHost / proxy hardening + request-body size limits** in
+  `api/app/main.py`.
+- [ ] **Client-side session hygiene**: clear cached Wardrobe/Outfits/Friends
+  Cubit state and the cached `user` on logout (`app/lib/main.dart`,
+  `auth_cubit.dart`, `auth_state.dart`, `friends_state.dart`); propagate
+  token-refresh failure back into auth state (`app/lib/core/network/auth_interceptor.dart`).
+- [ ] **Validate presigned upload URL host/scheme** on the client before PUTing
+  bytes (`app/lib/features/wardrobe/data/wardrobe_repository.dart`).
+
+### Backend features
+
+- [ ] **Auto-revoke shares when a friendship is removed** — deleting a friendship
+  currently leaves `Share` rows intact (`api/app/api/v1/routers/friends.py`,
+  `shares.py`).
+- [ ] **Cascade share cleanup** when a clothing item or outfit is deleted; add a
+  FK / cleanup so shares don't orphan (`api/app/models/share.py`,
+  `clothes.py`, `outfits.py`).
+- [ ] **"List who a resource is shared with"** endpoint (`shares.py`).
+- [ ] **Cancel outgoing friend request** as a first-class action; implement the
+  `blocked` friendship state that currently exists only as a dead enum value
+  (`api/app/models/friendship.py`).
+- [ ] **Account management**: password change, password reset, email
+  verification, email change, and account deletion (`auth.py`, `users.py`).
+- [ ] **Image lifecycle**: delete the previous object on image replacement
+  (avoid orphans) and add an image-replace endpoint (`clothes.py`).
+- [ ] **Pagination / filtering / sorting** for list endpoints and
+  `shared-with-me`.
+- [ ] **Recipient controls**: allow hiding/rejecting content shared with you.
+
+### Backend robustness & production readiness
+
+- [ ] **Deep health check**: `/health` should verify DB + storage connectivity,
+  not return a constant payload (`api/app/main.py`). Add an API healthcheck in
+  `docker-compose.yml`.
+- [ ] **Global exception handling** + structured error envelope + validation
+  error formatting; wrap commits with rollback on integrity errors.
+- [ ] **Don't swallow storage bucket-creation errors** at startup
+  (`api/app/services/storage_service.py`).
+- [ ] **Structured logging + request IDs**; add metrics/tracing (Sentry /
+  OpenTelemetry).
+- [ ] **Run synchronous MinIO SDK calls off the event loop** (thread pool) to
+  avoid blocking async routes (`storage_service.py`).
+- [ ] **Apply `garage/cors.json`** to the bucket as part of deploy — nothing
+  applies it today.
+- [ ] **Background cleanup** for expired revoked tokens and orphaned storage
+  objects.
+- [ ] **Dockerfile hardening**: non-root user, healthcheck, multi-stage build
+  (`api/Dockerfile`).
+
+### Data model
+
+- [ ] **`updated_at` columns** on mutable tables (users, clothing_items,
+  outfits, friendships, shares).
+- [ ] **DB-level constraints**: `requester_id != addressee_id`, no self-share,
+  symmetric friendship uniqueness, share `owner_id` consistency.
+- [ ] **Controlled taxonomy / limits** for clothing subcategory and `tags` (shape,
+  cardinality, length) instead of free-form JSON/string.
+
+### Frontend features
+
+- [ ] **Edit clothing items** — `updateClothingItem` exists in the repository but
+  has no Cubit/UI path (`wardrobe_repository.dart`).
+- [ ] **Edit outfits** — rename and add/remove items after creation
+  (`outfit_detail_screen.dart`).
+- [ ] **Tag input** when adding/editing clothing items — tags render but can't be
+  entered (`add_clothing_item_screen.dart`).
+- [ ] **Surface clothing-item sharing** — `shareClothingItem` exists but no UI
+  uses it (`friends_repository.dart`).
+- [ ] **Display shared clothing items** — `friend_shared_screen.dart` only renders
+  shared outfits, ignoring `sharedWithMe.clothingItems`.
+- [ ] **Fuller friend management**: remove friend, cancel outgoing request,
+  sent-request list, and a friend profile view. Requests currently show
+  truncated IDs instead of requester identity (`friends_screen.dart`).
+
+### Frontend robustness & UX
+
+- [ ] **Operation-level results**: have Cubits return success/failure for
+  create/delete/share/upload instead of screens guessing from list state
+  (e.g. `add_clothing_item_screen.dart` assumes the new item is `state.items.first`).
+- [ ] **Surface non-load errors**: delete/add/upload/share failures update
+  `errorMessage` but no screen listens for them.
+- [ ] **Fix permanent-spinner risk** on `friend_shared_screen.dart` when the load
+  fails; add a dedicated error state.
+- [ ] **Localize hardcoded strings** (e.g. delete dialog/tooltips in
+  `wardrobe_screen.dart`) and add tooltips/semantics to icon-only actions.
+- [ ] **Consistent image loading/error UI** across `wardrobe_screen.dart` and
+  `outfit_detail_screen.dart` (currently bare `Image.network`).
+- [ ] **Success feedback** for actions like sending a friend request.
+- [ ] **Lazy-load tabs** so all three tabs don't fire network loads on app entry
+  (`home_shell.dart` `IndexedStack`).
+- [ ] **Distinguish "offline/server-down" from "logged out"** on startup
+  (`auth_cubit.dart`).
+
+### Testing
+
+- [ ] **Backend**: cover `PATCH /users/me`, `/health`, outfit sharing, friend
+  decline/remove, unshare edge cases, invalid-object-key rejection, and storage
+  failures. Consider running tests against PostgreSQL (not just SQLite) to
+  exercise enum/UUID/JSON behavior.
+- [ ] **Frontend**: add Cubit tests, repository/interceptor tests (token
+  attach/refresh), widget tests for auth/wardrobe/outfits/friends, router
+  redirect tests, and localization tests. Only `app/test/models_test.dart`
+  exists today.
+
+### Infrastructure / ops
+
+- [ ] **Garage HA**: single-node with `replication_factor = 1` — no redundancy
+  (`garage/garage.toml`).
+- [ ] **Backup / retention / lifecycle policy** for Garage data volumes.
+- [ ] **Migration safety** for multi-instance deploys — startup currently runs
+  `alembic upgrade head` inline (`docker-compose.yml`), which can race when
+  scaled.

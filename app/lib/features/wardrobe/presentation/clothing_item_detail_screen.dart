@@ -71,7 +71,7 @@ class ClothingItemDetailScreen extends StatelessWidget {
   String _categoryText(BuildContext context) {
     final category = item.category.label(context);
     if (item.subcategory != null && item.subcategory!.isNotEmpty) {
-      return '$category · ${item.subcategory}';
+      return '$category · ${AppLocalizations.of(context).subcategoryLabel(item.subcategory!)}';
     }
     return category;
   }

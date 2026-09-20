@@ -141,7 +141,7 @@ class _OutfitItemCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     item.subcategory != null && item.subcategory!.isNotEmpty
-                        ? '${item.category.label(context)} · ${item.subcategory}'
+                        ? '${item.category.label(context)} · ${AppLocalizations.of(context).subcategoryLabel(item.subcategory!)}'
                         : item.category.label(context),
                     style: Theme.of(context).textTheme.bodySmall,
                     maxLines: 1,

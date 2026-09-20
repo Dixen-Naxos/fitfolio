@@ -148,10 +148,10 @@ class _AddClothingItemScreenState extends State<AddClothingItemScreen> {
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: _subcategory,
-                  decoration: const InputDecoration(labelText: 'Sous-catégorie'),
+                  decoration: InputDecoration(labelText: l10n.subcategory),
                   items: [
                     for (final option in _category.availableSubcategories)
-                      DropdownMenuItem(value: option, child: Text(option)),
+                      DropdownMenuItem(value: option, child: Text(l10n.subcategoryLabel(option))),
                   ],
                   onChanged: (value) => setState(() => _subcategory = value ?? _subcategory),
                 ),

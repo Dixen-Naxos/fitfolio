@@ -8,7 +8,7 @@ extension ClothingCategoryX on ClothingCategory {
   String get apiValue => name;
 
   static const Map<ClothingCategory, List<String>> subcategories = {
-    ClothingCategory.top: ['Sweat / pull', 'T-shirt', 'Débardeur', 'Brassières'],
+    ClothingCategory.top: ['Sweat / pull', 'Sous-pull', 'T-shirt', 'Débardeur', 'Brassières'],
     ClothingCategory.bottom: ['Jean', 'Pantalons', 'Shorts', 'Jupes'],
     ClothingCategory.dress: ['Hiver', 'Été'],
     ClothingCategory.outerwear: ['Manteaux', 'Vestes', 'Gilets'],

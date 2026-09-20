@@ -105,7 +105,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: ChoiceChip(
-                              label: Text(subcategory),
+                              label: Text(l10n.subcategoryLabel(subcategory)),
                               selected: _subFilter == subcategory,
                               onSelected: (_) => setState(() => _subFilter = subcategory),
                             ),
@@ -171,7 +171,7 @@ class _ClothingItemCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           item.subcategory != null && item.subcategory!.isNotEmpty
-                              ? '${item.category.label(context)} · ${item.subcategory}'
+                              ? '${item.category.label(context)} · ${AppLocalizations.of(context).subcategoryLabel(item.subcategory!)}'
                               : item.category.label(context),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),

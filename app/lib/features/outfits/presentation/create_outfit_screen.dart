@@ -89,7 +89,7 @@ class _CreateOutfitScreenState extends State<CreateOutfitScreen> {
                           Padding(
                             padding: const EdgeInsets.fromLTRB(24, 8, 16, 4),
                             child: Text(
-                              subcategoryEntry.key,
+                              l10n.subcategoryLabel(subcategoryEntry.key),
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ),

@@ -65,6 +65,10 @@ abstract class AppLocalizations {
   String get categoryLingerie;
   String get categoryOther;
 
+  // Clothing subcategories
+  String get subcategory;
+  String subcategoryLabel(String value);
+
   // Outfits
   String get myOutfits;
   String get noOutfitsYet;
@@ -181,6 +185,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryLingerie => 'Lingerie';
   @override
   String get categoryOther => 'Other';
+
+  @override
+  String get subcategory => 'Subcategory';
+  @override
+  String subcategoryLabel(String value) => const {
+        'Sweat / pull': 'Sweatshirt / sweater',
+        'Sous-pull': 'Under sweater',
+        'T-shirt': 'T-shirt',
+        'Débardeur': 'Tank top',
+        'Brassières': 'Bralette',
+        'Jean': 'Jeans',
+        'Pantalons': 'Trousers',
+        'Shorts': 'Shorts',
+        'Jupes': 'Skirts',
+        'Hiver': 'Winter',
+        'Été': 'Summer',
+        'Manteaux': 'Coats',
+        'Vestes': 'Jackets',
+        'Gilets': 'Cardigans',
+      }[value] ??
+      value;
 
   @override
   String get myOutfits => 'My Outfits';
@@ -323,6 +348,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get categoryLingerie => 'Lingerie';
   @override
   String get categoryOther => 'Autre';
+
+  @override
+  String get subcategory => 'Sous-catégorie';
+  @override
+  String subcategoryLabel(String value) => value;
 
   @override
   String get myOutfits => 'Mes tenues';

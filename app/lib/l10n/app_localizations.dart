@@ -96,6 +96,11 @@ abstract class AppLocalizations {
   String get sharedOutfits;
   String get noSharedOutfits;
   String get viewSharedOutfits;
+
+  // Clothing item details
+  String get color;
+  String get tags;
+  String get noImageAvailable;
 }
 
 class AppLocalizationsEn extends AppLocalizations {
@@ -231,6 +236,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noSharedOutfits => 'No outfits shared with you yet.';
   @override
   String get viewSharedOutfits => 'Tap to view shared outfits';
+
+  @override
+  String get color => 'Color';
+  @override
+  String get tags => 'Tags';
+  @override
+  String get noImageAvailable => 'No image available';
 }
 
 class AppLocalizationsFr extends AppLocalizations {
@@ -366,6 +378,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noSharedOutfits => "Aucune tenue partagée avec vous pour l'instant.";
   @override
   String get viewSharedOutfits => 'Appuyez pour voir les tenues partagées';
+
+  @override
+  String get color => 'Couleur';
+  @override
+  String get tags => 'Étiquettes';
+  @override
+  String get noImageAvailable => 'Aucune image disponible';
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

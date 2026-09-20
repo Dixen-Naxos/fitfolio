@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../auth/cubit/auth_cubit.dart';
@@ -81,27 +82,76 @@ class OutfitDetailScreen extends StatelessWidget {
               label: Text(l10n.shareWithAFriend),
             )
           : null,
-      body: ListView(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
             child: Text(l10n.outfitItems, style: Theme.of(context).textTheme.titleMedium),
           ),
-          if (outfit.items.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(l10n.emptyOutfit),
-            ),
-          for (final item in outfit.items)
-            ListTile(
-              leading: item.imageUrl != null
-                  ? CircleAvatar(backgroundImage: NetworkImage(item.imageUrl!))
-                  : const CircleAvatar(child: Icon(Icons.checkroom)),
-              title: Text(item.name),
-              subtitle: Text(item.category.label(context)),
-            ),
-          const SizedBox(height: 80),
+          Expanded(
+            child: outfit.items.isEmpty
+                ? Center(child: Text(l10n.emptyOutfit))
+                : GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.8,
+                    ),
+                    itemCount: outfit.items.length,
+                    itemBuilder: (context, index) => _OutfitItemCard(item: outfit.items[index]),
+                  ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _OutfitItemCard extends StatelessWidget {
+  const _OutfitItemCard({required this.item});
+
+  final ClothingItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push('/clothes/detail', extra: item),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: item.imageUrl != null
+                  ? Image.network(item.imageUrl!, fit: BoxFit.cover)
+                  : Container(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      child: const Icon(Icons.checkroom, size: 48),
+                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.subcategory != null && item.subcategory!.isNotEmpty
+                        ? '${item.category.label(context)} · ${item.subcategory}'
+                        : item.category.label(context),
+                    style: Theme.of(context).textTheme.bodySmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

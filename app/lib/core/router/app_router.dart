@@ -10,7 +10,9 @@ import '../../features/friends/presentation/friend_shared_screen.dart';
 import '../../features/outfits/models/outfit.dart';
 import '../../features/outfits/presentation/create_outfit_screen.dart';
 import '../../features/outfits/presentation/outfit_detail_screen.dart';
+import '../../features/wardrobe/models/clothing_item.dart';
 import '../../features/wardrobe/presentation/add_clothing_item_screen.dart';
+import '../../features/wardrobe/presentation/clothing_item_detail_screen.dart';
 import 'go_router_refresh_stream.dart';
 import 'home_shell.dart';
 
@@ -42,6 +44,10 @@ GoRouter buildRouter(AuthCubit authCubit) {
       GoRoute(
         path: '/outfits/detail',
         builder: (context, state) => OutfitDetailScreen(outfit: state.extra as Outfit),
+      ),
+      GoRoute(
+        path: '/clothes/detail',
+        builder: (context, state) => ClothingItemDetailScreen(item: state.extra as ClothingItem),
       ),
       GoRoute(
         path: '/friends/shared',

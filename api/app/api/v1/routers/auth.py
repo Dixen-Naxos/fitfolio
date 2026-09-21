@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import get_current_user
 from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.core.security import (
@@ -13,6 +14,7 @@ from app.core.security import (
     create_refresh_token,
     decode_token,
     hash_password,
+    token_version_of,
     verify_password,
 )
 from app.db.session import get_db
@@ -27,6 +29,7 @@ from app.schemas.auth import (
     TokenPair,
 )
 from app.schemas.user import UserRead
+
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -58,8 +61,8 @@ async def register(
     await db.commit()
     await db.refresh(user)
 
-    access_token = create_access_token(str(user.id))
-    refresh_token, _ = create_refresh_token(str(user.id))
+    access_token = create_access_token(str(user.id), user.token_version)
+    refresh_token, _ = create_refresh_token(str(user.id), user.token_version)
     return AuthResponse(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -80,8 +83,8 @@ async def login(
     if user is None or not verify_password(payload.password, user.password_hash):
         raise invalid_credentials
 
-    access_token = create_access_token(str(user.id))
-    refresh_token, _ = create_refresh_token(str(user.id))
+    access_token = create_access_token(str(user.id), user.token_version)
+    refresh_token, _ = create_refresh_token(str(user.id), user.token_version)
     return AuthResponse(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -116,10 +119,14 @@ async def refresh(
     if user is None:
         raise invalid_token
 
+    # Reject refresh tokens minted before a "log out all sessions" (stale token version).
+    if token_version_of(token_payload) != user.token_version:
+        raise invalid_token
+
     # Rotate refresh token: revoke the one just used and issue a new pair.
     db.add(RevokedToken(jti=jti, expires_at=_refresh_expiry(token_payload)))
-    new_access_token = create_access_token(str(user.id))
-    new_refresh_token, _ = create_refresh_token(str(user.id))
+    new_access_token = create_access_token(str(user.id), user.token_version)
+    new_refresh_token, _ = create_refresh_token(str(user.id), user.token_version)
     await db.commit()
 
     return TokenPair(access_token=new_access_token, refresh_token=new_refresh_token)
@@ -137,4 +144,19 @@ async def logout(payload: LogoutRequest, db: AsyncSession = Depends(get_db)) -> 
     if jti and not await _is_revoked(db, jti):
         db.add(RevokedToken(jti=jti, expires_at=_refresh_expiry(token_payload)))
         await db.commit()
+    return None
+
+
+@router.post("/logout-all", status_code=status.HTTP_204_NO_CONTENT)
+async def logout_all(
+    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+) -> None:
+    """Invalidate every session for the current user (all access and refresh tokens).
+
+    Bumps the per-user token version; any token carrying an older version is rejected by
+    get_current_user and the refresh endpoint. The user must log in again everywhere.
+    """
+    current_user.token_version += 1
+    db.add(current_user)
+    await db.commit()
     return None

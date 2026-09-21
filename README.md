@@ -104,7 +104,7 @@ each group. This is a living list — check items off as they land.
 - [x] **Rate limiting / brute-force protection** on auth endpoints
   (`api/app/api/v1/routers/auth.py`) — currently fully exposed to credential
   stuffing.
-- [ ] **Access-token revocation**: `get_current_user` does not consult
+- [x] **Access-token revocation**: `get_current_user` does not consult
   revocation state (`api/app/api/deps.py`); only refresh-token jtis are stored.
   Add revocation checks and "log out all sessions" support.
 - [ ] **File-upload hardening**: reject unknown `content_type` instead of

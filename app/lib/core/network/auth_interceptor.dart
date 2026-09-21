@@ -65,9 +65,26 @@ ApiException toApiException(DioException error) {
   final data = error.response?.data;
   String message = 'Something went wrong. Please try again.';
   if (data is Map && data['detail'] != null) {
-    message = data['detail'].toString();
+    message = _messageFromDetail(data['detail']);
   } else if (error.message != null) {
     message = error.message!;
   }
   return ApiException(error.response?.statusCode, message);
+}
+
+/// Extracts a human-readable message from a FastAPI error body's `detail`, which is a
+/// plain string for HTTPExceptions but a list of `{msg, loc, ...}` for 422 validation
+/// errors (e.g. the password policy).
+String _messageFromDetail(dynamic detail) {
+  if (detail is String) {
+    return detail;
+  }
+  if (detail is List && detail.isNotEmpty) {
+    final first = detail.first;
+    if (first is Map && first['msg'] != null) {
+      // Pydantic prefixes ValueError messages with 'Value error, '.
+      return first['msg'].toString().replaceFirst(RegExp(r'^Value error, '), '');
+    }
+  }
+  return detail.toString();
 }

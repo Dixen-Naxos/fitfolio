@@ -36,6 +36,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  // Mirrors the server-side password policy (api/app/core/passwords.py) so users get
+  // immediate feedback. The API remains authoritative (blocklist, identity checks).
+  String? _validatePassword(String? value, AppLocalizations l10n) {
+    final password = value ?? '';
+    if (password.length < 10) {
+      return l10n.passwordPolicyError;
+    }
+    final classes = [
+      RegExp(r'[a-z]'),
+      RegExp(r'[A-Z]'),
+      RegExp(r'[0-9]'),
+      RegExp(r'[^A-Za-z0-9]'),
+    ].where((pattern) => pattern.hasMatch(password)).length;
+    if (classes < 2) {
+      return l10n.passwordPolicyError;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -75,8 +94,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _passwordController,
                       obscureText: true,
                       decoration: InputDecoration(labelText: l10n.password),
-                      validator: (value) =>
-                          (value == null || value.length < 8) ? l10n.passwordValidationError : null,
+                      validator: (value) => _validatePassword(value, l10n),
                     ),
                     const SizedBox(height: 24),
                     BlocBuilder<AuthCubit, AuthState>(

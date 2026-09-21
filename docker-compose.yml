@@ -23,6 +23,9 @@ services:
     restart: always
     command: ["/garage", "server", "--single-node", "--default-bucket"]
     environment:
+      # RPC secret is injected here (not committed in garage/garage.toml). Required by
+      # Garage even for a single node; generate with `openssl rand -hex 32`.
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET}
       GARAGE_DEFAULT_ACCESS_KEY: ${GARAGE_ACCESS_KEY:-fitfolio}
       GARAGE_DEFAULT_SECRET_KEY: ${GARAGE_SECRET_KEY:-fitfolio123fitfolio123fitfolio1}
       GARAGE_DEFAULT_BUCKET: ${GARAGE_BUCKET:-fitfolio-images}

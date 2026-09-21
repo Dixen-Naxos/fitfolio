@@ -1,10 +1,12 @@
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
+from app.core.rate_limit import limiter
 from app.core.security import (
     InvalidTokenError,
     create_access_token,
@@ -39,7 +41,10 @@ async def _is_revoked(db: AsyncSession, jti: str) -> bool:
 
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
-async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db)) -> AuthResponse:
+@limiter.limit(lambda: settings.auth_register_rate_limit)
+async def register(
+    request: Request, payload: RegisterRequest, db: AsyncSession = Depends(get_db)
+) -> AuthResponse:
     existing = await db.execute(select(User).where(User.email == payload.email))
     if existing.scalar_one_or_none() is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
@@ -63,7 +68,10 @@ async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db))
 
 
 @router.post("/login", response_model=AuthResponse)
-async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)) -> AuthResponse:
+@limiter.limit(lambda: settings.auth_login_rate_limit)
+async def login(
+    request: Request, payload: LoginRequest, db: AsyncSession = Depends(get_db)
+) -> AuthResponse:
     invalid_credentials = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
     )
@@ -82,7 +90,10 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)) -> Au
 
 
 @router.post("/refresh", response_model=TokenPair)
-async def refresh(payload: RefreshRequest, db: AsyncSession = Depends(get_db)) -> TokenPair:
+@limiter.limit(lambda: settings.auth_refresh_rate_limit)
+async def refresh(
+    request: Request, payload: RefreshRequest, db: AsyncSession = Depends(get_db)
+) -> TokenPair:
     invalid_token = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token"
     )

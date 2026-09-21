@@ -94,14 +94,14 @@ each group. This is a living list — check items off as they land.
 
 ### Security (highest priority)
 
-- [ ] **Fail-fast config validation**: reject placeholder `JWT_SECRET_KEY`,
+- [x] **Fail-fast config validation**: reject placeholder `JWT_SECRET_KEY`,
   wildcard CORS, and default DB/Garage credentials at startup in production
   (`api/app/core/config.py`, `api/app/main.py`). Nothing currently prevents
   deploying with insecure defaults.
-- [ ] **Remove tracked secrets**: ensure `api/.env` is not committed (only
+- [x] **Remove tracked secrets**: ensure `api/.env` is not committed (only
   `api/.env.example` should be), and move the hardcoded `rpc_secret` out of
   `garage/garage.toml`.
-- [ ] **Rate limiting / brute-force protection** on auth endpoints
+- [x] **Rate limiting / brute-force protection** on auth endpoints
   (`api/app/api/v1/routers/auth.py`) — currently fully exposed to credential
   stuffing.
 - [ ] **Access-token revocation**: `get_current_user` does not consult

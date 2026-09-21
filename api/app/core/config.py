@@ -45,6 +45,14 @@ class Settings(BaseSettings):
     minio_presign_endpoint: str | None = None
     minio_presign_secure: bool | None = None
 
+    # Rate limiting (brute-force / credential-stuffing protection on auth endpoints).
+    # Set RATE_LIMIT_ENABLED=false to disable entirely (e.g. in tests). Limit strings use
+    # slowapi/limits syntax, e.g. "10/minute", "5/hour".
+    rate_limit_enabled: bool = True
+    auth_login_rate_limit: str = "10/minute"
+    auth_register_rate_limit: str = "10/hour"
+    auth_refresh_rate_limit: str = "30/minute"
+
     # CORS
     cors_origins: str = "*"
 

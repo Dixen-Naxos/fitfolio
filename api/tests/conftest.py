@@ -8,6 +8,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.db.base import Base
 from app.db.session import get_db
+from app.core.rate_limit import limiter
 from app.main import app
 from app.services import storage_service
 
@@ -46,6 +47,16 @@ def _stub_storage(monkeypatch):
     monkeypatch.setattr(storage_service, "build_object_key", fake_build_object_key)
     monkeypatch.setattr(storage_service, "delete_object", lambda object_key: None)
     monkeypatch.setattr(storage_service, "ensure_bucket", lambda: None)
+
+
+@pytest_asyncio.fixture(autouse=True)
+def _disable_rate_limit():
+    """Keep rate limiting out of the general suite; test_rate_limit.py opts back in."""
+    limiter.enabled = False
+    limiter.reset()
+    yield
+    limiter.enabled = False
+    limiter.reset()
 
 
 @pytest_asyncio.fixture

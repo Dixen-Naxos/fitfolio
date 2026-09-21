@@ -1,5 +1,6 @@
 import uuid
 from collections.abc import AsyncGenerator
+from types import SimpleNamespace
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
@@ -40,11 +41,16 @@ def _stub_storage(monkeypatch):
         return f"http://fake-minio.local/view/{object_key}"
 
     def fake_build_object_key(namespace: str, owner_id: uuid.UUID, resource_id: uuid.UUID, content_type: str) -> str:
-        return f"{namespace}/{owner_id}/{resource_id}/test.jpg"
+        extension = storage_service.ALLOWED_CONTENT_TYPES.get(content_type, "jpg")
+        return f"{namespace}/{owner_id}/{resource_id}/test.{extension}"
+
+    def fake_stat_object(object_key: str):
+        return SimpleNamespace(content_type="image/jpeg", size=2048)
 
     monkeypatch.setattr(storage_service, "presigned_upload_url", fake_upload_url)
     monkeypatch.setattr(storage_service, "presigned_view_url", fake_view_url)
     monkeypatch.setattr(storage_service, "build_object_key", fake_build_object_key)
+    monkeypatch.setattr(storage_service, "stat_object", fake_stat_object)
     monkeypatch.setattr(storage_service, "delete_object", lambda object_key: None)
     monkeypatch.setattr(storage_service, "ensure_bucket", lambda: None)
 

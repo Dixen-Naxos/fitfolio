@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from minio.error import S3Error
 
 from app.api.deps import get_current_user
+from app.core.config import settings
 from app.db.session import get_db
 from app.models.clothing_item import ClothingItem
 from app.models.share import ResourceType, Share
@@ -58,6 +59,46 @@ async def _get_accessible_item(db: AsyncSession, item_id: uuid.UUID, user: User)
     if share_result.scalar_one_or_none() is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Clothing item not found")
     return item
+
+
+def _verify_uploaded_object(object_key: str) -> None:
+    """Confirm the client actually uploaded a valid image before pointing an item at it.
+
+    Verifies the object exists and that its stored content type and size are within
+    the allowed bounds. Rejected objects are deleted to avoid accumulating junk.
+    """
+    try:
+        stat = storage_service.stat_object(object_key)
+    except S3Error as exc:
+        if exc.code in {"NoSuchKey", "NoSuchObject", "NoSuchBucket"}:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Uploaded object not found; upload the image before confirming",
+            ) from exc
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to verify uploaded image in storage",
+        ) from exc
+
+    problems: list[str] = []
+    if not storage_service.is_allowed_content_type(stat.content_type):
+        problems.append(f"unsupported content type {stat.content_type!r}")
+    size = stat.size or 0
+    if size <= 0:
+        problems.append("object is empty")
+    elif size > settings.max_upload_size_bytes:
+        problems.append(f"object exceeds max size of {settings.max_upload_size_bytes} bytes")
+
+    if problems:
+        # Drop the invalid upload so it doesn't linger in the bucket.
+        try:
+            storage_service.delete_object(object_key)
+        except S3Error:
+            pass
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid uploaded image: " + "; ".join(problems),
+        )
 
 
 @router.get("", response_model=list[ClothingItemRead])
@@ -141,6 +182,11 @@ async def create_upload_url(
     db: AsyncSession = Depends(get_db),
 ) -> UploadUrlResponse:
     item = await _get_owned_item(db, item_id, current_user.id)
+    if not storage_service.is_allowed_content_type(payload.content_type):
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=f"Unsupported content type; allowed: {sorted(storage_service.ALLOWED_CONTENT_TYPES)}",
+        )
     object_key = storage_service.build_object_key("clothes", current_user.id, item.id, payload.content_type)
     upload_url = storage_service.presigned_upload_url(object_key)
     return UploadUrlResponse(upload_url=upload_url, object_key=object_key)
@@ -157,6 +203,8 @@ async def confirm_image(
     expected_prefix = f"clothes/{current_user.id}/{item.id}/"
     if not payload.object_key.startswith(expected_prefix):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid object key")
+
+    _verify_uploaded_object(payload.object_key)
     item.image_key = payload.object_key
     db.add(item)
     await db.commit()

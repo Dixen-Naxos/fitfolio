@@ -44,6 +44,8 @@ class Settings(BaseSettings):
     # Keep MINIO_ENDPOINT internal for server-to-server MinIO operations.
     minio_presign_endpoint: str | None = None
     minio_presign_secure: bool | None = None
+    # Reject uploaded images larger than this (bytes), verified server-side on confirm.
+    max_upload_size_bytes: int = 10 * 1024 * 1024
 
     # Rate limiting (brute-force / credential-stuffing protection on auth endpoints).
     # Set RATE_LIMIT_ENABLED=false to disable entirely (e.g. in tests). Limit strings use

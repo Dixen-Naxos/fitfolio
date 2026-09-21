@@ -10,7 +10,7 @@ async def test_register_and_login(client: AsyncClient) -> None:
     assert "refresh_token" in data
 
     response = await client.post(
-        "/api/v1/auth/login", json={"email": "alice@example.com", "password": "password123"}
+        "/api/v1/auth/login", json={"email": "alice@example.com", "password": "Str0ngPass!23"}
     )
     assert response.status_code == 200
     assert "access_token" in response.json()
@@ -20,7 +20,7 @@ async def test_register_duplicate_email_rejected(client: AsyncClient) -> None:
     await register_user(client, "bob@example.com")
     response = await client.post(
         "/api/v1/auth/register",
-        json={"email": "bob@example.com", "password": "password123", "display_name": "Bob 2"},
+        json={"email": "bob@example.com", "password": "Str0ngPass!23", "display_name": "Bob 2"},
     )
     assert response.status_code == 409
 

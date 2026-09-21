@@ -1,12 +1,20 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
+from app.core.passwords import validate_password_strength
 from app.schemas.user import UserRead
 
 
 class RegisterRequest(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=8, max_length=128)
+    password: str = Field(max_length=128)
     display_name: str = Field(min_length=1, max_length=100)
+
+    @model_validator(mode="after")
+    def _enforce_password_policy(self) -> "RegisterRequest":
+        validate_password_strength(
+            self.password, email=self.email, display_name=self.display_name
+        )
+        return self
 
 
 class LoginRequest(BaseModel):

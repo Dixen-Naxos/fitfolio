@@ -111,7 +111,7 @@ each group. This is a living list — check items off as they land.
   silently coercing to `.jpg` (`api/app/services/storage_service.py`); verify
   object existence (HEAD), MIME type, and size before `confirm-image` accepts a
   key (`api/app/api/v1/routers/clothes.py`).
-- [ ] **Stronger password policy**: registration only enforces `min_length=8`
+- [x] **Stronger password policy**: registration only enforces `min_length=8`
   (`api/app/schemas/auth.py`). Add complexity/breach screening if desired.
 - [ ] **Case-insensitive email uniqueness** at the DB layer
   (`api/app/models/user.py`).

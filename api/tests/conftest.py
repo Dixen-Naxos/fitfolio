@@ -78,7 +78,7 @@ async def client(session_factory) -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides.clear()
 
 
-async def register_user(client: AsyncClient, email: str, password: str = "password123", display_name: str = "Test User") -> dict:
+async def register_user(client: AsyncClient, email: str, password: str = "Str0ngPass!23", display_name: str = "Test User") -> dict:
     response = await client.post(
         "/api/v1/auth/register",
         json={"email": email, "password": password, "display_name": display_name},

@@ -156,3 +156,119 @@ async def test_delete_clothing_item_removes_image_object(client: AsyncClient, mo
     delete_response = await client.delete(f"/api/v1/clothes/{item_id}", headers=headers)
     assert delete_response.status_code == 204
     assert deleted_keys == [object_key]
+
+
+async def test_upload_url_rejects_unsupported_content_type(client: AsyncClient) -> None:
+    user = await register_user(client, "wardrobe-badtype@example.com")
+    headers = auth_headers(user["access_token"])
+
+    create_response = await client.post(
+        "/api/v1/clothes", json={"name": "Boots", "category": "shoes"}, headers=headers
+    )
+    item_id = create_response.json()["id"]
+
+    response = await client.post(
+        f"/api/v1/clothes/{item_id}/image/upload-url",
+        json={"content_type": "application/pdf"},
+        headers=headers,
+    )
+    assert response.status_code == 415
+
+
+async def test_upload_url_accepts_png(client: AsyncClient) -> None:
+    user = await register_user(client, "wardrobe-png@example.com")
+    headers = auth_headers(user["access_token"])
+
+    create_response = await client.post(
+        "/api/v1/clothes", json={"name": "Scarf", "category": "accessory"}, headers=headers
+    )
+    item_id = create_response.json()["id"]
+
+    response = await client.post(
+        f"/api/v1/clothes/{item_id}/image/upload-url",
+        json={"content_type": "image/png"},
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assert response.json()["object_key"].endswith(".png")
+
+
+async def test_confirm_rejects_missing_object(client: AsyncClient, monkeypatch) -> None:
+    from minio.error import S3Error
+
+    user = await register_user(client, "wardrobe-missing@example.com")
+    headers = auth_headers(user["access_token"])
+
+    create_response = await client.post(
+        "/api/v1/clothes", json={"name": "Cap", "category": "accessory"}, headers=headers
+    )
+    item_id = create_response.json()["id"]
+    object_key = f"clothes/{user['user']['id']}/{item_id}/test.png"
+
+    def raise_missing(key: str):
+        raise S3Error("NoSuchKey", "not found", key, "req", "host", None)
+
+    monkeypatch.setattr(storage_service, "stat_object", raise_missing)
+
+    response = await client.post(
+        f"/api/v1/clothes/{item_id}/image/confirm",
+        json={"object_key": object_key},
+        headers=headers,
+    )
+    assert response.status_code == 400
+
+
+async def test_confirm_rejects_wrong_mime(client: AsyncClient, monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    user = await register_user(client, "wardrobe-wrongmime@example.com")
+    headers = auth_headers(user["access_token"])
+
+    create_response = await client.post(
+        "/api/v1/clothes", json={"name": "Gloves", "category": "accessory"}, headers=headers
+    )
+    item_id = create_response.json()["id"]
+    object_key = f"clothes/{user['user']['id']}/{item_id}/test.png"
+
+    deleted: list[str] = []
+    monkeypatch.setattr(
+        storage_service, "stat_object", lambda key: SimpleNamespace(content_type="application/pdf", size=1024)
+    )
+    monkeypatch.setattr(storage_service, "delete_object", lambda key: deleted.append(key))
+
+    response = await client.post(
+        f"/api/v1/clothes/{item_id}/image/confirm",
+        json={"object_key": object_key},
+        headers=headers,
+    )
+    assert response.status_code == 400
+    # The junk object should have been cleaned up.
+    assert deleted == [object_key]
+
+
+async def test_confirm_rejects_oversized_object(client: AsyncClient, monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    from app.core.config import settings
+
+    user = await register_user(client, "wardrobe-oversize@example.com")
+    headers = auth_headers(user["access_token"])
+
+    create_response = await client.post(
+        "/api/v1/clothes", json={"name": "Coat", "category": "outerwear"}, headers=headers
+    )
+    item_id = create_response.json()["id"]
+    object_key = f"clothes/{user['user']['id']}/{item_id}/test.png"
+
+    too_big = settings.max_upload_size_bytes + 1
+    monkeypatch.setattr(
+        storage_service, "stat_object", lambda key: SimpleNamespace(content_type="image/png", size=too_big)
+    )
+    monkeypatch.setattr(storage_service, "delete_object", lambda key: None)
+
+    response = await client.post(
+        f"/api/v1/clothes/{item_id}/image/confirm",
+        json={"object_key": object_key},
+        headers=headers,
+    )
+    assert response.status_code == 400

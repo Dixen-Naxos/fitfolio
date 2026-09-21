@@ -27,6 +27,7 @@ abstract class AppLocalizations {
   String get emailValidationError;
   String get password;
   String get passwordValidationError;
+  String get passwordPolicyError;
   String get logIn;
   String get noAccountRegister;
 
@@ -123,6 +124,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get password => 'Password';
   @override
   String get passwordValidationError => 'Minimum 8 characters';
+  @override
+  String get passwordPolicyError =>
+      'At least 10 characters, mixing letters with numbers or symbols';
   @override
   String get logIn => 'Log in';
   @override
@@ -286,6 +290,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get password => 'Mot de passe';
   @override
   String get passwordValidationError => 'Minimum 8 caractères';
+  @override
+  String get passwordPolicyError =>
+      'Au moins 10 caractères, avec lettres et chiffres ou symboles';
   @override
   String get logIn => 'Se connecter';
   @override

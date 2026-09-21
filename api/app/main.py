@@ -10,6 +10,8 @@ from app.services.storage_service import ensure_bucket
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Fail fast if we're about to run in production with insecure default configuration.
+    settings.validate_for_production()
     ensure_bucket()
     yield
 

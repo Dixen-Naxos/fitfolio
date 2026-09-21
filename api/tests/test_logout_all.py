@@ -39,7 +39,7 @@ async def test_login_after_logout_all_yields_usable_tokens(client: AsyncClient) 
     # Logging in again issues tokens carrying the bumped version, so they work.
     login = await client.post(
         "/api/v1/auth/login",
-        json={"email": "logout-relogin@example.com", "password": "password123"},
+        json={"email": "logout-relogin@example.com", "password": "Str0ngPass!23"},
     )
     assert login.status_code == 200
     new_access = login.json()["access_token"]

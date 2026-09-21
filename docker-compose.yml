@@ -23,6 +23,9 @@ services:
     restart: always
     command: ["/garage", "server", "--single-node", "--default-bucket"]
     environment:
+      # RPC secret is injected here (not committed in garage/garage.toml). Required by
+      # Garage even for a single node; generate with `openssl rand -hex 32`.
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET}
       GARAGE_DEFAULT_ACCESS_KEY: ${GARAGE_ACCESS_KEY:-fitfolio}
       GARAGE_DEFAULT_SECRET_KEY: ${GARAGE_SECRET_KEY:-fitfolio123fitfolio123fitfolio1}
       GARAGE_DEFAULT_BUCKET: ${GARAGE_BUCKET:-fitfolio-images}
@@ -58,6 +61,8 @@ services:
     env_file:
       - ./api/.env
     environment:
+      # Enables fail-fast config validation (rejects placeholder/default secrets at startup).
+      ENVIRONMENT: production
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-fitfolio}:${POSTGRES_PASSWORD:-fitfolio}@db:5432/${POSTGRES_DB:-fitfolio}
       MINIO_ENDPOINT: garage:3900
       MINIO_PRESIGN_ENDPOINT: ${GARAGE_API_DOMAIN_NAME}

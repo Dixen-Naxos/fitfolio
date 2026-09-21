@@ -2,8 +2,11 @@
 # Docs: https://garagehq.deuxfleurs.fr/documentation/quick-start/
 #
 # This file is mounted read-only into the `garage` service in docker-compose.yml.
-# `rpc_secret` only secures node-to-node RPC (irrelevant for a single-node cluster with
-# no peers), but you can regenerate it with `openssl rand -hex 32` if you want to.
+#
+# NOTE: `rpc_secret` is intentionally NOT set here so no secret is committed to the repo.
+# It is injected at runtime via the GARAGE_RPC_SECRET environment variable (see
+# docker-compose.yml and .env.example). `rpc_secret` only secures node-to-node RPC, which is
+# irrelevant for a single-node cluster with no peers, but Garage still requires it to be set.
 
 metadata_dir = "/data/meta"
 data_dir = "/data/data"
@@ -12,7 +15,6 @@ replication_factor = 1
 
 rpc_bind_addr = "[::]:3901"
 rpc_public_addr = "127.0.0.1:3901"
-rpc_secret = "aa9154bf347eaf51e6c50c36283f17329932ff2c80184fce716ab95ad39e8801"
 
 [s3_api]
 s3_region = "garage"

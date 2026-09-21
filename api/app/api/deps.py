@@ -5,7 +5,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import InvalidTokenError, decode_token
+from app.core.security import InvalidTokenError, decode_token, token_version_of
 from app.db.session import get_db
 from app.models.user import User
 
@@ -34,5 +34,9 @@ async def get_current_user(
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if user is None:
+        raise credentials_error
+
+    # Reject access tokens minted before a "log out all sessions" (stale token version).
+    if token_version_of(payload) != user.token_version:
         raise credentials_error
     return user
